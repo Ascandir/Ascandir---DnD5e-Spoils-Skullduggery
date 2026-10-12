@@ -1,4 +1,4 @@
-# Ascandir – Spoils & Skullduggery v0.22.1
+# Ascandir – Spoils & Skullduggery v0.23.0
 
 Tote NSCs und Spielercharaktere (Totenkopf-Status) lassen sich im Umkreis plündern. D&D 5e, Foundry v13/v14.
 
@@ -8,7 +8,7 @@ Tote NSCs und Spielercharaktere (Totenkopf-Status) lassen sich im Umkreis plünd
 2. Taste **L** drücken. Am sichersten: Maus auf die Leiche halten und L drücken. Ohne Maus auf einer Leiche
    öffnet L die nächste Leiche in Reichweite. Alternativ: Rechtsklick auf den **eigenen** Token und den Beutel-Button wählen
    (erscheint nur, wenn eine Leiche in Reichweite liegt). Die Leiche selbst lässt sich als Spieler nicht rechtsklicken, das ist in Foundry so.
-2b. **Doppelklick** auf die Leiche öffnet das Fenster ebenfalls (eigenen Token vorher auswählen).
+2b. **Rechtsklick** auf einen fremden Token zeigt ein kleines Menü mit einem Button: **Looten** (Token tot oder bewusstlos) oder **Stehlen** (bei Bewusstsein und am Leben). Eigenen Token vorher auswählen.
 3. Im Fenster: **Nehmen** (ins eigene Inventar), **An Gruppe** (ins Gruppeninventar), bei Stapeln vorher die Menge einstellen.
    **Alles nehmen** / **Alles an Gruppe** leert die Leiche inklusive Münzen.
 
@@ -84,7 +84,7 @@ Nur für die Spielleitung sichtbar (gilt für alle):
 - **Beute automatisch freigeben** (aus = Spielleitung gibt jede Leiche frei)
 - **Party-Inventar** (Automatisch, oder einen bestimmten Actor wählen)
 - **Beute-Tabelle würfeln** (beim Tod / beim Platzieren / manuell)
-- **Doppelklick zum Plündern**, **Akzentfarbe**
+- **Akzentfarbe**
 
 Für jeden Spieler einzeln:
 - **Beutel-Button im Rechtsklick-Menü zeigen** (an/aus)
@@ -130,7 +130,7 @@ und der Gegenstand bleibt bei der Leiche.
 
 ## Taschendiebstahl (lebende NSC)
 
-Ein Spieler kann einen lebenden NSC oder Spielercharakter (eines anderen Spielers) per Doppelklick oder mit der Taste L (Maus auf dem Token) bestehlen, sofern er in Reichweite ist.
+Ein Spieler kann einen lebenden NSC oder Spielercharakter (eines anderen Spielers) per Rechtsklick-Menü ("Stehlen") oder mit der Taste L (Maus auf dem Token) bestehlen, sofern er in Reichweite ist.
 Er würfelt Fingerfertigkeit gegen den SG. Der SG ist standardmäßig die **passive Wahrnehmung** des Ziels, die Spielleitung kann im Beute-Fenster (Zahnrad im Abschnitt „Taschendiebstahl“) einen eigenen SG setzen oder das Stehlen für diesen Token ausschalten.
 
 - Misserfolg: Der Dieb wird erwischt (Chatnachricht für alle), mehr Versuche gibt es nicht.
@@ -169,7 +169,7 @@ Das Türschloss-Fenster ist ein echtes Schloss: Eisenplatte mit Messingrand, Nie
 Beim Anlegen eines Actors gibt es den neuen Typ **Container**. Er hat einen eigenen Bogen (Name, Bild, Beschreibung, Münzen, Gegenstände per Drag & Drop) und funktioniert wie ein NSC mit Beute-Tabelle:
 - **Loottable**: wie bei NSC; jeder platzierte Token würfelt beim Platzieren seine eigene Beute (Token nicht mit dem Actor verknüpfen).
 - **Schloss** (Spielleitung, unter den drei Punkten → Ascandir, im Token-HUD oder im Bogen): zugesperrt ja/nein, SG zum Knacken, Versuche pro Charakter, Diebeswerkzeug nötig, Schlüssel (Gegenstand hineinziehen oder Namen eintippen).
-- Spieler öffnen den Container wie eine Leiche (Doppelklick, Taste L). Ist er zugesperrt, erscheint das Eisenschloss-Fenster mit Schlüssel und Schloss knacken. Erst danach sieht man den Inhalt.
+- Spieler öffnen den Container wie eine Leiche (Rechtsklick-Menü, Taste L). Ist er zugesperrt, erscheint das Eisenschloss-Fenster mit Schlüssel und Schloss knacken. Erst danach sieht man den Inhalt.
 
 Im Container-Bogen wählst du das **Typ**: *Truhe* (Holz mit Eisenbeschlägen und Messingschild) oder *Sack* (Lederbeutel). Das Schloss-Fenster ist ein Vorhängeschloss in Holz und Eisen und gilt für Türen und Container. Der Chat nennt bei Containern den Namen des Tokens statt "Tür".
 

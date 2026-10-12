@@ -144,7 +144,7 @@ export function isCorpse(tokenDoc) {
   const actor = tokenDoc?.actor;
   if (!actor || !LOOTABLE_ACTORS.includes(actor.type)) return false;
   if (actor.type === CONTAINER_TYPE) return true; // Container sind immer "offen" (außer das Schloss ist zu)
-  return Boolean(actor.statuses?.has("dead") || tokenDoc.hasStatusEffect?.("dead"));
+  return Boolean(actor.statuses?.has("dead") || tokenDoc.hasStatusEffect?.("dead") || actor.statuses?.has("unconscious") || tokenDoc.hasStatusEffect?.("unconscious"));
 }
 
 const gridOf = (scene) => ({ gridSize: scene.grid.size, gridDistance: scene.grid.distance });

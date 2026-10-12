@@ -78,14 +78,6 @@ Hooks.once("init", () => {
     type: Boolean,
     default: true
   });
-  game.settings.register(MODULE_ID, "doubleClick", {
-    name: "CLOOT.Setting.DoubleClick.Name",
-    hint: "CLOOT.Setting.DoubleClick.Hint",
-    scope: "world",
-    config: true,
-    type: Boolean,
-    default: true
-  });
   // Pro Spieler: Beutel-Button im Rechtsklick-Menü ein- oder ausblenden
   game.settings.register(MODULE_ID, "showHud", {
     name: "CLOOT.Setting.ShowHud.Name",
@@ -157,7 +149,7 @@ function applyAccent() {
 /* -------------------------------------------- */
 
 /** Auf dem Spieler-PC prüfen wir nur grob. Die endgültige Prüfung macht immer die Spielleitung. */
-const isDeadClient = (td) => Boolean(td?.hasStatusEffect?.("dead") || td?.actor?.statuses?.has("dead") || td?.actor?.type === CONTAINER_TYPE || td?.getFlag?.(MODULE_ID, "box"));
+const isDeadClient = (td) => Boolean(td?.hasStatusEffect?.("dead") || td?.hasStatusEffect?.("unconscious") || td?.actor?.statuses?.has("dead") || td?.actor?.statuses?.has("unconscious") || td?.actor?.type === CONTAINER_TYPE || td?.getFlag?.(MODULE_ID, "box"));
 
 /**
  * Lebender NSC, den dieser Spieler bestehlen dürfte. Spieler kennen fremde NSC oft gar nicht als Actor
@@ -488,36 +480,82 @@ Hooks.on("createToken", (td) => {
 });
 
 /* -------------------------------------------- */
-/*  Doppelklick für Spieler                      */
+/*  Rechtsklick-Menü für fremde Token (Spieler)  */
 /* -------------------------------------------- */
 
 Hooks.on("canvasReady", () => {
   const board = canvas.app?.canvas ?? canvas.app?.view ?? document.getElementById("board");
   if (!board || board.dataset.corpseLoot) return;
   board.dataset.corpseLoot = "1";
-  board.addEventListener("dblclick", onBoardDoubleClick);
+  board.addEventListener("contextmenu", onBoardContext);
 });
 
-/** Foundry kennt fremde Token für Spieler nicht als klickbar. Deshalb prüfen wir selbst, was unter dem Mauszeiger liegt. */
-export async function onBoardDoubleClick(ev) {
+let ctxMenu = null;
+function closeCtxMenu() {
+  if (!ctxMenu) return;
+  ctxMenu.remove();
+  ctxMenu = null;
+  document.removeEventListener("pointerdown", onOutside, true);
+  document.removeEventListener("keydown", onCtxKey, true);
+  document.removeEventListener("wheel", closeCtxMenu, true);
+}
+function onOutside(ev) {
+  if (ctxMenu && !ctxMenu.contains(ev.target)) closeCtxMenu();
+}
+function onCtxKey(ev) {
+  if (ev.key === "Escape") closeCtxMenu();
+}
+
+/**
+ * Fremde Token kennt Foundry für Spieler nicht als klickbar (kein Token-Menü). Darum prüfen wir selbst,
+ * was unter dem Mauszeiger liegt, und zeigen ein kleines Menü mit einem Button:
+ * „Looten“ (tot oder bewusstlos) oder „Stehlen“ (bei Bewusstsein und am Leben).
+ */
+export function onBoardContext(ev) {
   try {
-    if (game.user.isGM || !game.settings.get(MODULE_ID, "doubleClick")) return;
-    if (!canvas?.ready || !canvas.tokens) return;
+    closeCtxMenu();
+    if (game.user.isGM || !canvas?.ready || !canvas.tokens) return;
     const point = canvas.canvasCoordinatesFromClient?.({ x: ev.clientX, y: ev.clientY }) ?? canvas.mousePosition;
     if (!point) return;
-    const corpse = canvas.tokens.placeables
-      .filter((tk) => tk.visible && (isDeadClient(tk.document) || isPickableClient(tk.document)) && tk.bounds.contains(point.x, point.y))
+    const target = canvas.tokens.placeables
+      .filter((tk) => tk.visible && !tk.document.isOwner && (isDeadClient(tk.document) || isPickableClient(tk.document)) && tk.bounds.contains(point.x, point.y))
       .sort((a, b) => (b.document.elevation ?? 0) - (a.document.elevation ?? 0))[0];
-    if (!corpse) return;
+    if (!target) return;
+    const loot = isDeadClient(target.document);
+    showCtxMenu(ev.clientX, ev.clientY, target.document, loot);
+  } catch (err) {
+    reportError(err);
+  }
+}
+
+function showCtxMenu(x, y, td, loot) {
+  const menu = document.createElement("div");
+  menu.className = "cl-ctx";
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.innerHTML = `<i class="fa-solid ${loot ? "fa-sack-dollar" : "fa-hand-holding"}"></i><span></span>`;
+  btn.querySelector("span").textContent = t(loot ? "CLOOT.Ctx.Loot" : "CLOOT.Ctx.Steal");
+  btn.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    closeCtxMenu();
     const looter = looterToken();
     if (!looter) {
       ui.notifications.warn(t("CLOOT.Notify.SelectToken"));
       return;
     }
-    await openLoot(corpse.document, looter);
-  } catch (err) {
-    reportError(err);
-  }
+    openLoot(td, looter).catch(reportError);
+  });
+  menu.append(btn);
+  menu.addEventListener("contextmenu", (ev) => ev.preventDefault());
+  document.body.append(menu);
+  const w = menu.offsetWidth, h = menu.offsetHeight;
+  menu.style.left = `${Math.max(4, Math.min(x + 6, window.innerWidth - w - 4))}px`;
+  menu.style.top = `${Math.max(4, Math.min(y + 6, window.innerHeight - h - 4))}px`;
+  ctxMenu = menu;
+  document.addEventListener("pointerdown", onOutside, true);
+  document.addEventListener("keydown", onCtxKey, true);
+  document.addEventListener("wheel", closeCtxMenu, true);
 }
 
 /* -------------------------------------------- */
