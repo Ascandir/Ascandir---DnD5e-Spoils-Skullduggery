@@ -483,12 +483,40 @@ Hooks.on("createToken", (td) => {
 /*  Rechtsklick-Menü für fremde Token (Spieler)  */
 /* -------------------------------------------- */
 
-Hooks.on("canvasReady", () => {
-  const board = canvas.app?.canvas ?? canvas.app?.view ?? document.getElementById("board");
-  if (!board || board.dataset.corpseLoot) return;
-  board.dataset.corpseLoot = "1";
-  board.addEventListener("contextmenu", onBoardContext);
-});
+/*
+ * Wir lauschen auf Dokument-Ebene (Capture), damit uns kein anderes Modul und auch Foundry selbst nicht
+ * die Ereignisse wegnehmen kann. Ein Rechtsklick zählt, wenn die Maus dabei kaum bewegt wurde
+ * (Rechtsklick + Ziehen verschiebt die Ansicht und soll kein Menü öffnen).
+ */
+let rightDown = null;
+let lastShown = 0;
+const onBoard = (ev) => ev.target?.id === "board" || ev.target === canvas?.app?.canvas;
+document.addEventListener(
+  "pointerdown",
+  (ev) => {
+    rightDown = ev.button === 2 && onBoard(ev) ? { x: ev.clientX, y: ev.clientY } : null;
+  },
+  true
+);
+document.addEventListener(
+  "pointerup",
+  (ev) => {
+    const d = rightDown;
+    rightDown = null;
+    if (ev.button !== 2 || !d || !onBoard(ev)) return;
+    if (Math.hypot(ev.clientX - d.x, ev.clientY - d.y) > 6) return;
+    onBoardContext(ev);
+  },
+  true
+);
+document.addEventListener(
+  "contextmenu",
+  (ev) => {
+    // Fallback, falls das Pointer-Ereignis nicht ankam
+    if (onBoard(ev) && Date.now() - lastShown > 400) onBoardContext(ev);
+  },
+  true
+);
 
 let ctxMenu = null;
 function closeCtxMenu() {
@@ -513,6 +541,7 @@ function onCtxKey(ev) {
  */
 export function onBoardContext(ev) {
   try {
+    if (Date.now() - lastShown < 400) return;
     closeCtxMenu();
     if (game.user.isGM || !canvas?.ready || !canvas.tokens) return;
     const point = canvas.canvasCoordinatesFromClient?.({ x: ev.clientX, y: ev.clientY }) ?? canvas.mousePosition;
@@ -522,6 +551,7 @@ export function onBoardContext(ev) {
       .sort((a, b) => (b.document.elevation ?? 0) - (a.document.elevation ?? 0))[0];
     if (!target) return;
     const loot = isDeadClient(target.document);
+    lastShown = Date.now();
     showCtxMenu(ev.clientX, ev.clientY, target.document, loot);
   } catch (err) {
     reportError(err);
