@@ -1,6 +1,7 @@
 # Baut das Modul-Paket und hängt module.json + module.zip an die GitHub-Release.
 # Startet automatisch, wenn eine Release veröffentlicht wird (egal ob der Tag "v0.16.0" oder "0.16.0" heißt),
-# bei einem neuen Tag "v..." und per Hand über Actions > Release > Run workflow.
+# bei einem neuen Tag "v...", per Hand über Actions > Release > Run workflow
+# und automatisch bei jedem Push auf main, der die Version in module.json ändert (legt Tag und Release selbst an).
 name: Release
 
 on:
@@ -9,6 +10,10 @@ on:
   push:
     tags:
       - "v*"
+    branches:
+      - main
+    paths:
+      - module.json
   workflow_dispatch:
     inputs:
       tag:
@@ -22,27 +27,44 @@ concurrency:
   group: release-${{ github.event.inputs.tag || github.event.release.tag_name || github.ref_name }}
   cancel-in-progress: false
 
-env:
-  TAG: ${{ github.event.inputs.tag || github.event.release.tag_name || github.ref_name }}
-
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - name: Tag bestimmen
+        id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "branch" ]; then
+            TAG=$(python3 -c "import json; print(json.load(open('module.json', encoding='utf-8'))['version'])")
+            if gh release view "${TAG}" >/dev/null 2>&1; then
+              echo "Release ${TAG} gibt es schon, nichts zu tun."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            TAG="${{ github.event.inputs.tag || github.event.release.tag_name || github.ref_name }}"
+          fi
+          echo "TAG=${TAG}" >> "$GITHUB_ENV"
+
       - name: Version und Download-Adressen eintragen
+        if: steps.tag.outputs.skip != 'true'
         run: |
           python3 .github/set_urls.py "${TAG}" "${GITHUB_REPOSITORY}"
 
       - name: Paket bauen (module.json liegt direkt im Zip, ohne Zusatzordner)
+        if: steps.tag.outputs.skip != 'true'
         run: |
           zip -r module.zip . -x ".git/*" ".github/*" ".gitignore" "*.zip"
 
       - name: Dateien an die Release hängen
+        if: steps.tag.outputs.skip != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
+          target_commitish: ${{ github.sha }}
           files: |
             module.json
             module.zip
