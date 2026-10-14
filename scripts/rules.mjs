@@ -406,3 +406,20 @@ export async function mergeStacks(actor) {
   if (removals.length) await actor.deleteEmbeddedDocuments("Item", removals);
   return removals.length;
 }
+
+/* -------------------------------------------- */
+/*  Taschen mit benutzbaren Verbrauchsgegenständen */
+/* -------------------------------------------- */
+
+/** "Pouch, Backpack" -> ["pouch", "backpack"] */
+export const pouchNames = (raw) =>
+  String(raw ?? "")
+    .split(/[,;\n]/)
+    .map((x) => x.trim().toLowerCase())
+    .filter(Boolean);
+
+/** Der Name des Behälters enthält einen der eingetragenen Namen (Groß-/Kleinschreibung egal). */
+export const inPouch = (bagName, names) => {
+  const n = String(bagName ?? "").toLowerCase();
+  return names.some((x) => n.includes(x));
+};

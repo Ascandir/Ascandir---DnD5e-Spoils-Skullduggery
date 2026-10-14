@@ -2,6 +2,7 @@ import { MODULE_ID, CONTAINER_TYPE, inRange, tokenDistance, pickpocketAllowed } 
 import * as Service from "./service.mjs";
 import { installDoorHook, addLockFields } from "./door.mjs";
 import { registerContainer } from "./container.mjs";
+import { registerPouch, refreshPouch } from "./pouch.mjs";
 import { CSS } from "./styles.mjs";
 
 /**
@@ -32,6 +33,16 @@ function reportError(err) {
 
 Hooks.once("init", () => {
   registerContainer();
+  registerPouch();
+  game.settings.register(MODULE_ID, "pouchNames", {
+    name: "CLOOT.Setting.Pouch.Name",
+    hint: "CLOOT.Setting.Pouch.Hint",
+    scope: "world",
+    config: true,
+    type: String,
+    default: "",
+    onChange: () => refreshPouch()
+  });
   game.settings.register(MODULE_ID, "range", {
     name: "CLOOT.Setting.Range.Name",
     hint: "CLOOT.Setting.Range.Hint",
@@ -134,6 +145,8 @@ Hooks.once("setup", () => {
 });
 
 Hooks.once("ready", () => {
+  // Actors wurden evtl. vor der Einstellung berechnet: Taschen jetzt einbeziehen
+  if (String(game.settings.get(MODULE_ID, "pouchNames") ?? "").trim()) refreshPouch();
   Service.initSocket();
   applyAccent();
   game.modules.get(MODULE_ID).api = { lootNearby, openLoot, editTable, editHarvest, editThievery, rollLoot: rollSelected, editLock };
