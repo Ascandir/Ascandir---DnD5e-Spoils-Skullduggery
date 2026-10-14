@@ -151,6 +151,8 @@
   "CLOOT.Cfg.Coin.ep": "Electrum",
   "CLOOT.Cfg.Coin.sp": "Silver",
   "CLOOT.Cfg.Coin.cp": "Copper",
+  "CLOOT.Setting.Pouch.Name": "Pouches with usable consumables",
+  "CLOOT.Setting.Pouch.Hint": "Names of inventory containers whose consumables additionally appear in the character sheet inventory list and can be used there (they stay in the container). Separate several names with commas, e.g. Pouch, Backpack. The container name only has to contain the entry. Empty = off.",
   "CLOOT.Setting.Bag.Name": "Pouch look (just for you)",
   "CLOOT.Setting.Bag.Hint": "Shows the loot window as a leather pouch. If the pictures do not display correctly for you, switch it off here: you get a plain window with the same functions.",
   "CLOOT.Close": "Close",

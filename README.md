@@ -1,4 +1,4 @@
-# Ascandir - DnD5e Spoils & Skullduggery v0.25.1
+# Ascandir - DnD5e Spoils & Skullduggery v0.26.0
 
 Tote NSCs und Spielercharaktere (Totenkopf-Status) lassen sich im Umkreis plündern. D&D 5e, Foundry v13/v14.
 
@@ -179,3 +179,9 @@ Dritter Typ: **Ressource** (Steinrahmen).  Die Versuche zählen dabei weiter her
 
 ## Ernte: Versuche
 In der Ernte-Stufe steht jetzt ein Feld **Versuche** statt "Nur ein Versuch": Wie oft jeder Charakter die Ernte versuchen darf. Gezählt wird der Wurf. Leer = unbegrenzt, ältere Einträge bleiben bei einem Versuch. Im Ascandir-Menü gibt es dafür den Knopf **Ernte**, auch bei Containern (z. B. für Rohstoffe).
+
+## Verbrauchsgegenstände aus Taschen benutzen
+
+In den Moduleinstellungen (Spielleitung) gibt es das Feld **Taschen mit benutzbaren Verbrauchsgegenständen**. Dort trägst du Behälternamen ein, zum Beispiel `Pouch, Backpack` (Komma als Trenner, es genügt ein Teil des Namens: "Belt Pouch" passt auf "Pouch"). Verbrauchsgegenstände in so benannten Behältern bleiben in der Tasche, erscheinen aber zusätzlich in der Inventarliste des Charakterbogens und lassen sich dort direkt benutzen. Es wird nichts verschoben oder gespeichert. Feld leer = Funktion aus.
+
+Aktionsleisten: Das Token Action HUD liest die Gegenstände direkt vom Actor. Argon und Stylish Action HUD sind noch ungeprüft.

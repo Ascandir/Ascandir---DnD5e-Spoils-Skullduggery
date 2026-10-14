@@ -151,6 +151,8 @@
   "CLOOT.Cfg.Coin.ep": "Elektrum",
   "CLOOT.Cfg.Coin.sp": "Silber",
   "CLOOT.Cfg.Coin.cp": "Kupfer",
+  "CLOOT.Setting.Pouch.Name": "Taschen mit benutzbaren Verbrauchsgegenständen",
+  "CLOOT.Setting.Pouch.Hint": "Namen von Behältern im Inventar, deren Verbrauchsgegenstände zusätzlich in der Inventarliste des Charakterbogens erscheinen und dort benutzt werden können (sie bleiben in der Tasche). Mehrere Namen mit Komma trennen, z. B. Pouch, Backpack. Es reicht, wenn der Behältername den Eintrag enthält. Leer = aus.",
   "CLOOT.Setting.Bag.Name": "Beutel-Optik (nur für dich)",
   "CLOOT.Setting.Bag.Hint": "Zeigt das Beute-Fenster als Lederbeutel. Wenn die Bilder bei dir nicht richtig erscheinen, hier abschalten: Dann siehst du ein schlichtes Fenster mit denselben Funktionen.",
   "CLOOT.Close": "Schließen",
