@@ -311,7 +311,8 @@
 .bag-row:first-child { border-top: 0; }
 .bag-task, .bag-add { grid-template-columns: 3rem minmax(0, 1fr) auto; }
 .bag-ico { display: grid; place-items: center; width: 2.7rem; height: 2.7rem; background: #130c07; border: 1px solid rgba(199, 154, 69, 0.55); border-radius: 3px; box-shadow: inset 0 0 8px #000; }
-.bag-ico img { width: 88%; height: 88%; object-fit: contain; border: 0; background: none; }
+.bag-ico { position: relative; overflow: hidden; flex: none; }
+.bag-ico img { position: absolute; inset: 6%; width: 88%; height: 88%; max-width: none; max-height: none; object-fit: contain; border: 0; background: none; }
 .bag-ico-fa { font-size: 1.15rem; color: var(--bag-brass); }
 .bag-task:has(.fa-check) .bag-ico-fa { color: #8fcf7a; }
 .bag-task:has(.fa-xmark) .bag-ico-fa { color: #c97a6a; }
@@ -474,11 +475,13 @@
 .cl-cont-drop { justify-content: center; color: #b9a584; font-style: italic; }
 
 /* ---------- Scrollen bei vielen Gegenständen ---------- */
-.bag-items { max-height: min(48vh, 520px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #8a6a3a rgba(0, 0, 0, 0.35); }
+.bag-panel > * { flex-shrink: 0; }
+.bag-panel > .bag-items { flex: 1 1 auto; min-height: 4rem; flex-shrink: 1; }
+.bag-items { max-height: max(14rem, calc(100vh - 380px)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #8a6a3a rgba(0, 0, 0, 0.35); }
 .bag-items::-webkit-scrollbar { width: 9px; }
 .bag-items::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.35); border-radius: 5px; }
 .bag-items::-webkit-scrollbar-thumb { background: #8a6a3a; border-radius: 5px; border: 1px solid #2c1d13; }
-.cl-bag.cl-chest .bag-items { max-height: min(42vh, 440px); }
+.cl-bag.cl-chest .bag-items { max-height: max(14rem, calc(100vh - 400px)); }
 
 /* ---------- Truhe aus Holzplanken (Container, Aussehen "Truhe") ---------- */
 .cl-chest .cl-sprite { position: absolute; z-index: 4; left: 50%; top: 20px; width: 86px; height: auto; transform: translateX(-50%); pointer-events: none; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.6)); }
