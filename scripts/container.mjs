@@ -1,4 +1,4 @@
-import { MODULE_ID, CONTAINER_TYPE, COINS, isLootableItem, buildItemView } from "./rules.mjs";
+import { MODULE_ID, CONTAINER_TYPE, COINS, isLootableItem, buildItemView, stackKey, mergeStacks } from "./rules.mjs";
 
 const t = (key, data) => (data ? game.i18n.format(key, data) : game.i18n.localize(key));
 
@@ -51,7 +51,8 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
         editImage: ContainerSheet.onEditImage,
         removeItem: ContainerSheet.onRemoveItem,
         editTable: ContainerSheet.onEditTable,
-        editLock: ContainerSheet.onEditLock
+        editLock: ContainerSheet.onEditLock,
+        mergeStacks: ContainerSheet.onMergeStacks
       }
     };
 
@@ -88,6 +89,26 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
 
     static async onRemoveItem(event, target) {
       await this.document.items.get(target.dataset.itemId)?.delete();
+    }
+
+    static async onMergeStacks() {
+      const n = await mergeStacks(this.document);
+      ui.notifications.info(t(n ? "CLOOT.Container.Merged" : "CLOOT.Container.NothingToMerge", { n }));
+    }
+
+    /** Gleiche Gegenstände landen auf einem Stapel, statt als neue Zeile. */
+    async _onDropItem(event, item) {
+      const actor = this.document;
+      if (this.isEditable && item?.parent !== actor) {
+        const key = stackKey(item);
+        const target = key ? actor.items.find((i) => stackKey(i) === key) : null;
+        if (target) {
+          const add = Number(item.system.quantity) || 1;
+          await target.update({ "system.quantity": (Number(target.system.quantity) || 0) + add });
+          return target;
+        }
+      }
+      return super._onDropItem(event, item);
     }
 
     static async onEditTable() {

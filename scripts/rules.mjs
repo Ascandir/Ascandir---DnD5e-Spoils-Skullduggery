@@ -355,3 +355,54 @@ export function triesLeft(lock, attempts, actorId) {
   const used = Math.max(0, Math.floor(Number(attempts?.[actorId]) || 0));
   return Math.max(0, lock.maxTries - used);
 }
+
+/* -------------------------------------------- */
+/*  Stapeln                                      */
+/* -------------------------------------------- */
+
+/** Zwei Gegenstände sind stapelbar, wenn sie in allem Wesentlichen gleich sind (Name, Bild, Preis, Herkunft). */
+export function stackKey(item) {
+  if (!item || item.type === "container") return null;
+  const q = item.system?.quantity;
+  if (q === undefined || q === null || !Number.isFinite(Number(q))) return null;
+  if (item.system?.equipped || item.system?.attuned) return null;
+  const flag = (k) => {
+    const v = item.getFlag?.(MODULE_ID, k);
+    return v === undefined || v === null || v === false ? "" : String(v);
+  };
+  return JSON.stringify([
+    item.type,
+    item.name,
+    item.img,
+    item.system?.identified !== false,
+    item.system?.price?.value ?? null,
+    item.system?.price?.denomination ?? null,
+    item.system?.rarity ?? null,
+    item.system?.container ?? null,
+    flag("generated"),
+    flag("harvested")
+  ]);
+}
+
+/** Fasst gleiche Gegenstände eines Actors zu Stapeln zusammen. Gibt die Zahl der entfernten Einträge zurück. */
+export async function mergeStacks(actor) {
+  const groups = new Map();
+  for (const item of actor.items) {
+    const key = stackKey(item);
+    if (!key) continue;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  }
+  const updates = [];
+  const removals = [];
+  for (const list of groups.values()) {
+    if (list.length < 2) continue;
+    const [first, ...rest] = list;
+    const total = list.reduce((n, i) => n + (Number(i.system.quantity) || 0), 0);
+    updates.push({ _id: first.id, "system.quantity": total });
+    removals.push(...rest.map((i) => i.id));
+  }
+  if (updates.length) await actor.updateEmbeddedDocuments("Item", updates);
+  if (removals.length) await actor.deleteEmbeddedDocuments("Item", removals);
+  return removals.length;
+}

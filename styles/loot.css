@@ -494,3 +494,4 @@
 .cl-ctx button { display: flex; align-items: center; gap: 0.5rem; margin: 0; padding: 0.35rem 0.8rem; min-width: 8rem; background: transparent; border: 1px solid transparent; border-radius: 4px; color: #ecdcb8; font-size: 1rem; line-height: 1.4; cursor: pointer; }
 .cl-ctx button:hover { color: #fff; border-color: color-mix(in srgb, var(--corpse-loot-accent, #7a1f27) 85%, #000); background: linear-gradient(90deg, color-mix(in srgb, var(--corpse-loot-accent, #7a1f27) 95%, #000), color-mix(in srgb, var(--corpse-loot-accent, #7a1f27) 22%, transparent)); }
 .cl-ctx i { width: 1.2em; text-align: center; }
+.cl-cont-stack { display: flex; justify-content: flex-end; margin: 0.3rem 0; }

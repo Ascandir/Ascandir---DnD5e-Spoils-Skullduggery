@@ -35,6 +35,7 @@
     {{/each}}
   </div>
 
+  {{#if editable}}<div class="cl-cont-stack"><button type="button" data-action="mergeStacks"><i class="fa-solid fa-layer-group"></i> {{localize "CLOOT.Container.Merge"}}</button></div>{{/if}}
   <ul class="cl-cont-items" data-drop>
     {{#each items}}
     <li>

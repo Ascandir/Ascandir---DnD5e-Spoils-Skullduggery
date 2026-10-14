@@ -5,6 +5,7 @@ import {
   isLootableItem,
   inRange,
   findStack,
+  mergeStacks,
   clampQty,
   buildItemView,
   nonEmptyCoins,
@@ -587,7 +588,10 @@ export async function rollLoot(tokenDoc, { force = false, quiet = false } = {}) 
     foundry.utils.setProperty(data, `flags.${MODULE_ID}.generated`, true);
     docs.push(data);
   }
-  if (docs.length) await actor.createEmbeddedDocuments("Item", docs);
+  if (docs.length) {
+    await actor.createEmbeddedDocuments("Item", docs);
+    if (actor.type === CONTAINER_TYPE) await mergeStacks(actor).catch(() => 0);
+  }
 
   await tokenDoc.setFlag(MODULE_ID, "rolled", true);
   await tokenDoc.setFlag(MODULE_ID, "genCoins", Object.fromEntries(COINS.map((k) => [k, result.coins[k] || 0])));
@@ -769,7 +773,10 @@ async function grantHarvest(actor, entry) {
     docs.push(data);
     got.push({ name: it.name || src.name, qty });
   }
-  if (docs.length) await actor.createEmbeddedDocuments("Item", docs);
+  if (docs.length) {
+    await actor.createEmbeddedDocuments("Item", docs);
+    if (actor.type === CONTAINER_TYPE) await mergeStacks(actor).catch(() => 0);
+  }
   return got;
 }
 
