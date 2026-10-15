@@ -545,7 +545,19 @@ async function rollOp(ctx) {
  * @param {TokenDocument} tokenDoc
  * @param {{force?: boolean, quiet?: boolean}} [options]
  */
-export async function rollLoot(tokenDoc, { force = false, quiet = false } = {}) {
+const rollQueue = new Map();
+export function rollLoot(tokenDoc, options = {}) {
+  // Würfe pro Token nacheinander ausführen, damit sich zwei gleichzeitige Würfe nicht gegenseitig die Gegenstände löschen
+  const key = tokenDoc?.uuid ?? "?";
+  const run = (rollQueue.get(key) ?? Promise.resolve()).catch(() => {}).then(() => rollLootNow(tokenDoc, options));
+  rollQueue.set(key, run);
+  run.finally(() => {
+    if (rollQueue.get(key) === run) rollQueue.delete(key);
+  }).catch(() => {});
+  return run;
+}
+
+async function rollLootNow(tokenDoc, { force = false, quiet = false } = {}) {
   const actor = tokenDoc?.actor;
   if (!actor || (actor.type !== "npc" && actor.type !== CONTAINER_TYPE)) return fail("CLOOT.Err.NoCorpse");
   const raw = (tokenDoc.baseActor ?? actor).getFlag(MODULE_ID, "table");
@@ -588,16 +600,24 @@ export async function rollLoot(tokenDoc, { force = false, quiet = false } = {}) 
     foundry.utils.setProperty(data, `flags.${MODULE_ID}.generated`, true);
     docs.push(data);
   }
+  let created = [];
   if (docs.length) {
-    await actor.createEmbeddedDocuments("Item", docs);
+    created = (await actor.createEmbeddedDocuments("Item", docs)) ?? [];
     if (actor.type === CONTAINER_TYPE) await mergeStacks(actor).catch(() => 0);
   }
+  if (created.length < docs.length) console.warn(`${MODULE_ID} | ${docs.length - created.length} Gegenstände konnten nicht angelegt werden`, docs.map((d) => d.name));
+  // Der Chat nennt nur, was wirklich angelegt wurde, mit den Mengen, die tatsächlich im Inventar stehen
+  result.items = created.length
+    ? created.map((i) => ({ name: i.name, qty: Number(actor.items.get(i.id)?.system?.quantity ?? i.system?.quantity ?? 1) || 1 }))
+    : [];
+  console.info(`${MODULE_ID} | angelegt`, result.items.map((i) => `${i.qty}× ${i.name}`));
 
   await tokenDoc.setFlag(MODULE_ID, "rolled", true);
   await tokenDoc.setFlag(MODULE_ID, "genCoins", Object.fromEntries(COINS.map((k) => [k, result.coins[k] || 0])));
 
   if (!quiet) {
-    const what = describeRoll(result) || t("CLOOT.Table.NothingRolled");
+    let what = describeRoll(result) || t("CLOOT.Table.NothingRolled");
+    if (missing.length) what += ` (${t("CLOOT.Notify.Missing", { names: missing.join(", ") })})`;
     await ChatMessage.create({
       content: `<div class="corpse-loot-chat"><p>${t("CLOOT.Chat.Rolled", {
         name: escapeHtml(tokenDoc.name),
