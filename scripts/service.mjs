@@ -600,16 +600,29 @@ async function rollLootNow(tokenDoc, { force = false, quiet = false } = {}) {
     foundry.utils.setProperty(data, `flags.${MODULE_ID}.generated`, true);
     docs.push(data);
   }
-  let created = [];
+  const expected = new Map(); // Name -> gewürfelte Menge
+  for (const it of result.items) {
+    if (missing.includes(it.name || it.uuid)) continue;
+    expected.set(it.name, (expected.get(it.name) ?? 0) + it.qty);
+  }
   if (docs.length) {
-    created = (await actor.createEmbeddedDocuments("Item", docs)) ?? [];
+    await actor.createEmbeddedDocuments("Item", docs);
     if (actor.type === CONTAINER_TYPE) await mergeStacks(actor).catch(() => 0);
   }
-  if (created.length < docs.length) console.warn(`${MODULE_ID} | ${docs.length - created.length} Gegenstände konnten nicht angelegt werden`, docs.map((d) => d.name));
-  // Der Chat nennt nur, was wirklich angelegt wurde, mit den Mengen, die tatsächlich im Inventar stehen
-  result.items = created.length
-    ? created.map((i) => ({ name: i.name, qty: Number(actor.items.get(i.id)?.system?.quantity ?? i.system?.quantity ?? 1) || 1 }))
-    : [];
+
+  // Sicherstellen, dass die gewürfelten Mengen wirklich im Inventar stehen (sonst steht dort überall 1)
+  const generated = () => actor.items.filter((i) => i.getFlag(MODULE_ID, "generated"));
+  const fixes = [];
+  for (const [name, qty] of expected) {
+    const same = generated().filter((i) => i.name === name && i.system?.quantity !== undefined);
+    if (same.length === 1 && Number(same[0].system.quantity) !== qty) fixes.push({ _id: same[0].id, "system.quantity": qty });
+  }
+  if (fixes.length) {
+    console.warn(`${MODULE_ID} | Mengen nachgetragen`, fixes);
+    await actor.updateEmbeddedDocuments("Item", fixes);
+  }
+  // Der Chat nennt, was wirklich im Inventar liegt
+  result.items = generated().map((i) => ({ name: i.name, qty: Number(i.system?.quantity ?? 1) || 1 }));
   console.info(`${MODULE_ID} | angelegt`, result.items.map((i) => `${i.qty}× ${i.name}`));
 
   await tokenDoc.setFlag(MODULE_ID, "rolled", true);
