@@ -337,7 +337,8 @@ export async function rollSelected() {
     for (const td of docs) {
       const res = await Service.rollLoot(td, { force: true, quiet: true });
       if (res.ok) done++;
-      else ui.notifications.warn(`${td.name}: ${Service.errorText(res)}`);
+      if (res.ok && res.missing?.length) ui.notifications.warn(t("CLOOT.Notify.Missing", { names: res.missing.join(", ") }));
+      if (!res.ok) ui.notifications.warn(`${td.name}: ${Service.errorText(res)}`);
     }
     if (done) ui.notifications.info(t("CLOOT.Notify.RolledN", { n: done }));
   } catch (err) {

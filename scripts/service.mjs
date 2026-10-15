@@ -606,6 +606,8 @@ export async function rollLoot(tokenDoc, { force = false, quiet = false } = {}) 
       whisper: game.users.filter((u) => u.isGM).map((u) => u.id)
     });
   }
+  // Offene Beute-Fenster (auch bei Spielern) zeigen sofort den neuen Stand
+  changed(tokenDoc.uuid);
   return { ok: true, result, missing };
 }
 
