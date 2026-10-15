@@ -534,6 +534,7 @@ async function rollOp(ctx) {
   if (!ctx.isGM) return fail("CLOOT.Err.GMOnly");
   const res = await rollLoot(ctx.corpse, { force: true });
   if (!res.ok) return res;
+  ctx.actor = ctx.corpse.actor ?? ctx.actor; // frischer Stand nach dem Anlegen
   changed(ctx.corpse.uuid);
   return { ok: true, state: buildState(ctx) };
 }
@@ -607,11 +608,13 @@ async function rollLootNow(tokenDoc, { force = false, quiet = false } = {}) {
   }
   if (docs.length) {
     await actor.createEmbeddedDocuments("Item", docs);
-    if (actor.type === CONTAINER_TYPE) await mergeStacks(actor).catch(() => 0);
+    // Bei unverknüpften Token kann Foundry den Actor nach dem Anlegen neu aufbauen: ab hier immer frisch holen
+    if (tokenDoc.actor?.type === CONTAINER_TYPE) await mergeStacks(tokenDoc.actor).catch(() => 0);
   }
 
   // Sicherstellen, dass die gewürfelten Mengen wirklich im Inventar stehen (sonst steht dort überall 1)
-  const generated = () => actor.items.filter((i) => i.getFlag(MODULE_ID, "generated"));
+  const live = () => tokenDoc.actor ?? actor;
+  const generated = () => live().items.filter((i) => i.getFlag(MODULE_ID, "generated"));
   const fixes = [];
   for (const [name, qty] of expected) {
     const same = generated().filter((i) => i.name === name && i.system?.quantity !== undefined);
@@ -619,11 +622,11 @@ async function rollLootNow(tokenDoc, { force = false, quiet = false } = {}) {
   }
   if (fixes.length) {
     console.warn(`${MODULE_ID} | Mengen nachgetragen`, fixes);
-    await actor.updateEmbeddedDocuments("Item", fixes);
+    await live().updateEmbeddedDocuments("Item", fixes);
   }
   // Der Chat nennt, was wirklich im Inventar liegt
   result.items = generated().map((i) => ({ name: i.name, qty: Number(i.system?.quantity ?? 1) || 1 }));
-  console.info(`${MODULE_ID} | angelegt`, result.items.map((i) => `${i.qty}× ${i.name}`));
+  console.info(`${MODULE_ID} | angelegt`, result.items.map((i) => `${i.qty}× ${i.name}`), `Gegenstände gesamt: ${live().items.size ?? live().items.length}`);
 
   await tokenDoc.setFlag(MODULE_ID, "rolled", true);
   await tokenDoc.setFlag(MODULE_ID, "genCoins", Object.fromEntries(COINS.map((k) => [k, result.coins[k] || 0])));
