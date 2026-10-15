@@ -558,6 +558,44 @@ export function rollLoot(tokenDoc, options = {}) {
   return run;
 }
 
+/**
+ * Legt Gegenstände an und wartet, bis sie wirklich im Inventar stehen (andere Module wie Plutonium
+ * ersetzen sie nachträglich durch eigene Kopien mit Menge 1 und ohne unsere Markierung).
+ * Danach werden Markierung und gewürfelte Menge gesetzt und doppelte Kopien entfernt.
+ * `want`: Map Name -> Menge. Gibt die frischen Gegenstände zurück.
+ */
+async function createItems(getActor, docs, { flags = {}, want = new Map() } = {}) {
+  if (!docs.length) return [];
+  const before = new Set(getActor().items.map((i) => i.id));
+  await getActor().createEmbeddedDocuments("Item", docs);
+  const fresh = () => getActor().items.filter((i) => !before.has(i.id));
+  const names = new Set(docs.map((d) => d.name));
+  for (let n = 0; n < 40; n++) {
+    const have = new Set(fresh().map((i) => i.name));
+    if ([...names].every((nm) => have.has(nm))) break;
+    await new Promise((r) => setTimeout(r, 150));
+  }
+  // Kurz nachwarten, falls ein Import noch Kopien nachreicht
+  await new Promise((r) => setTimeout(r, 400));
+  const dups = [];
+  const seen = new Set();
+  for (const i of fresh()) {
+    if (seen.has(i.name)) dups.push(i.id);
+    else seen.add(i.name);
+  }
+  if (dups.length) await getActor().deleteEmbeddedDocuments("Item", dups).catch(() => {});
+  const ups = [];
+  for (const i of fresh()) {
+    const u = { _id: i.id };
+    for (const [k, v] of Object.entries(flags)) if (i.getFlag(MODULE_ID, k) !== v) u[`flags.${MODULE_ID}.${k}`] = v;
+    const q = want.get(i.name);
+    if (q !== undefined && i.system?.quantity !== undefined && Number(i.system.quantity) !== q) u["system.quantity"] = q;
+    if (Object.keys(u).length > 1) ups.push(u);
+  }
+  if (ups.length) await getActor().updateEmbeddedDocuments("Item", ups);
+  return fresh();
+}
+
 async function rollLootNow(tokenDoc, { force = false, quiet = false } = {}) {
   const actor = tokenDoc?.actor;
   if (!actor || (actor.type !== "npc" && actor.type !== CONTAINER_TYPE)) return fail("CLOOT.Err.NoCorpse");
@@ -606,24 +644,10 @@ async function rollLootNow(tokenDoc, { force = false, quiet = false } = {}) {
     if (missing.includes(it.name || it.uuid)) continue;
     expected.set(it.name, (expected.get(it.name) ?? 0) + it.qty);
   }
-  if (docs.length) {
-    await actor.createEmbeddedDocuments("Item", docs);
-    // Bei unverknüpften Token kann Foundry den Actor nach dem Anlegen neu aufbauen: ab hier immer frisch holen
-    if (tokenDoc.actor?.type === CONTAINER_TYPE) await mergeStacks(tokenDoc.actor).catch(() => 0);
-  }
-
-  // Sicherstellen, dass die gewürfelten Mengen wirklich im Inventar stehen (sonst steht dort überall 1)
   const live = () => tokenDoc.actor ?? actor;
+  await createItems(live, docs, { flags: { generated: true }, want: expected });
+  if (docs.length && live().type === CONTAINER_TYPE) await mergeStacks(live()).catch(() => 0);
   const generated = () => live().items.filter((i) => i.getFlag(MODULE_ID, "generated"));
-  const fixes = [];
-  for (const [name, qty] of expected) {
-    const same = generated().filter((i) => i.name === name && i.system?.quantity !== undefined);
-    if (same.length === 1 && Number(same[0].system.quantity) !== qty) fixes.push({ _id: same[0].id, "system.quantity": qty });
-  }
-  if (fixes.length) {
-    console.warn(`${MODULE_ID} | Mengen nachgetragen`, fixes);
-    await live().updateEmbeddedDocuments("Item", fixes);
-  }
   // Der Chat nennt, was wirklich im Inventar liegt
   result.items = generated().map((i) => ({ name: i.name, qty: Number(i.system?.quantity ?? 1) || 1 }));
   console.info(`${MODULE_ID} | angelegt`, result.items.map((i) => `${i.qty}× ${i.name}`), `Gegenstände gesamt: ${live().items.size ?? live().items.length}`);
@@ -812,8 +836,10 @@ async function grantHarvest(actor, entry) {
     got.push({ name: it.name || src.name, qty });
   }
   if (docs.length) {
-    await actor.createEmbeddedDocuments("Item", docs);
-    if (actor.type === CONTAINER_TYPE) await mergeStacks(actor).catch(() => 0);
+    const live = () => (actor?.isToken ? actor.token?.actor ?? actor : actor);
+    const want = new Map(got.map((g) => [g.name, g.qty]));
+    await createItems(live, docs, { flags: { harvested: entry.id }, want });
+    if (live().type === CONTAINER_TYPE) await mergeStacks(live()).catch(() => 0);
   }
   return got;
 }
