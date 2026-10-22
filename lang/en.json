@@ -277,5 +277,8 @@
   "CLOOT.Container.Deposit": "Put in",
   "CLOOT.Container.Plus": "One more (Shift: 10)",
   "CLOOT.Container.Minus": "One less (Shift: 10)",
-  "CLOOT.Container.DropHint": "Drag items from an inventory here"
+  "CLOOT.Container.DropHint": "Drag items from an inventory here",
+  "CLOOT.Container.PlayersOwn": "Players may put items in",
+  "CLOOT.On": "on",
+  "CLOOT.Off": "off"
 }

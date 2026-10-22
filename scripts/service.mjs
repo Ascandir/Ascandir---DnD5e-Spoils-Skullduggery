@@ -496,9 +496,14 @@ async function depositItem(user, p) {
   if (item.system?.container) return fail("CLOOT.Err.Internal"); // Inhalt eines Beutels: den Beutel selbst ziehen
   const max = item.type === "container" ? 1 : Number(item.system?.quantity ?? 1) || 1;
   const qty = Math.min(max, Math.max(1, Math.floor(Number(p.qty) || max)));
-  await moveItem(src, item, qty, dst);
-  if (dst.token) changed(dst.token.uuid);
+  await moveItemTo(item, dst, qty);
   return { ok: true, name: item.name, qty };
+}
+
+/** Verschiebt einen Gegenstand (oder einen Teil des Stapels) in einen anderen Actor. Läuft bei dem, der die Rechte an beiden hat. */
+export async function moveItemTo(item, dst, qty) {
+  await moveItem(item.parent, item, qty, dst);
+  if (dst.token) changed(dst.token.uuid);
 }
 
 async function copyTree(src, dst, parentId, qty) {

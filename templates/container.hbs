@@ -8,6 +8,7 @@
     {{#if isGM}}
     <div class="cl-cont-tools">
       <button type="button" data-action="editTable"><i class="fa-solid fa-dice"></i> {{localize "CLOOT.Menu.Loottable"}}{{#if hasTable}} ✓{{/if}}</button>
+      <button type="button" data-action="playersOwn" class="{{#if playersOwn}}active{{/if}}"><i class="fa-solid {{#if playersOwn}}fa-lock-open{{else}}fa-lock{{/if}}"></i> {{localize "CLOOT.Container.PlayersOwn"}}: {{#if playersOwn}}{{localize "CLOOT.On"}}{{else}}{{localize "CLOOT.Off"}}{{/if}}</button>
       <button type="button" data-action="editLock"><i class="fa-solid fa-lock"></i> {{localize "CLOOT.Menu.Lock"}}</button>
     </div>
     {{/if}}
@@ -41,7 +42,7 @@
     <li>
       <img src="{{img}}" alt=""><span class="n">{{name}}</span>
       {{#if hasQty}}
-      {{#if ../editable}}
+      {{#if ../isGM}}
       <span class="cl-qtybox">
         <button type="button" class="cl-qbtn" data-action="qtyMinus" data-item-id="{{id}}" data-tooltip="CLOOT.Container.Minus"><i class="fa-solid fa-minus"></i></button>
         <input type="number" class="cl-qty" data-item-id="{{id}}" min="1" step="1" value="{{qty}}">
@@ -49,7 +50,7 @@
       </span>
       {{else}}<em class="cl-qtyview">×{{qty}}</em>{{/if}}
       {{/if}}
-      {{#if ../editable}}<button type="button" data-action="removeItem" data-item-id="{{id}}" data-tooltip="CLOOT.Table.Remove"><i class="fa-solid fa-trash"></i></button>{{/if}}
+      {{#if ../isGM}}<button type="button" data-action="removeItem" data-item-id="{{id}}" data-tooltip="CLOOT.Table.Remove"><i class="fa-solid fa-trash"></i></button>{{/if}}
     </li>
     {{/each}}
     <li class="cl-cont-drop"><i class="fa-solid fa-plus"></i> {{localize "CLOOT.Container.DropHint"}}</li>

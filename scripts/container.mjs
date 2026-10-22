@@ -35,6 +35,7 @@ export function registerContainer() {
     if (actor.type !== CONTAINER_TYPE) return;
     const img = "icons/containers/chest/chest-wooden-brown.webp";
     actor.updateSource({
+      ownership: { ...(actor.ownership ?? {}), default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER },
       img: actor.img && !actor.img.includes("mystery-man") ? actor.img : img,
       prototypeToken: { actorLink: false, disposition: 0, displayName: 30, texture: { src: img }, flags: { [MODULE_ID]: { box: true, boxLocked: false } } }
     });
@@ -54,6 +55,7 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
         editTable: ContainerSheet.onEditTable,
         editLock: ContainerSheet.onEditLock,
         mergeStacks: ContainerSheet.onMergeStacks,
+        playersOwn: ContainerSheet.onPlayersOwn,
         qtyPlus: ContainerSheet.onQtyPlus,
         qtyMinus: ContainerSheet.onQtyMinus
       }
@@ -81,8 +83,22 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
           { value: "sack", label: t("CLOOT.Container.StyleSack"), selected: actor.system.style === "sack" },
           { value: "resource", label: t("CLOOT.Container.StyleResource"), selected: actor.system.style === "resource" }
         ],
+        playersOwn: this.playersOwn,
         hasTable: Boolean(actor.getFlag(MODULE_ID, "table"))
       };
+    }
+
+    /** Dürfen Spieler den Container selbst befüllen? (Besitzerrecht für alle) */
+    get playersOwn() {
+      const base = this.document.isToken ? this.document.baseActor : this.document;
+      return (base?.ownership?.default ?? 0) >= CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
+    }
+
+    static async onPlayersOwn() {
+      const base = this.document.isToken ? this.document.baseActor : this.document;
+      const L = CONST.DOCUMENT_OWNERSHIP_LEVELS;
+      await base.update({ "ownership.default": this.playersOwn ? L.NONE : L.OWNER });
+      this.render();
     }
 
     static async onEditImage() {
@@ -91,6 +107,7 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
     }
 
     static async onRemoveItem(event, target) {
+      if (!game.user.isGM) return;
       await this.document.items.get(target.dataset.itemId)?.delete();
     }
 
@@ -102,7 +119,7 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
     /** Menge ändern (Plus/Minus und Eingabefeld). Nur für Besitzer; mindestens 1, zum Entfernen gibt es den Papierkorb. */
     async setQty(itemId, value) {
       const item = this.document.items.get(itemId);
-      if (!item || !this.isEditable) return;
+      if (!item || !this.isEditable || !game.user.isGM) return;
       const qty = Math.max(1, Math.floor(Number(value) || 1));
       if (qty !== Number(item.system.quantity)) await item.update({ "system.quantity": qty });
     }
@@ -177,6 +194,11 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
         }).catch(() => null);
         if (!res) return;
         qty = Math.min(max, Math.max(1, Math.floor(res)));
+      }
+      // Mit Besitzerrecht an beiden Seiten geht es sofort, ganz ohne Spielleiter. Sonst macht es die Spielleitung.
+      if (actor.isOwner && item.parent.isOwner) {
+        await Service.moveItemTo(item, actor, qty);
+        return;
       }
       const res = await Service.request("deposit", { itemUuid: item.uuid, actorUuid: actor.uuid, qty });
       if (!res.ok) ui.notifications.warn(Service.errorText(res));

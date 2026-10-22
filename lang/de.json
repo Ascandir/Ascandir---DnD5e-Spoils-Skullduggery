@@ -277,5 +277,8 @@
   "CLOOT.Container.Deposit": "Hineinlegen",
   "CLOOT.Container.Plus": "Eins mehr (Umschalt: 10)",
   "CLOOT.Container.Minus": "Eins weniger (Umschalt: 10)",
-  "CLOOT.Container.DropHint": "Gegenstände aus dem Inventar hierher ziehen"
+  "CLOOT.Container.DropHint": "Gegenstände aus dem Inventar hierher ziehen",
+  "CLOOT.Container.PlayersOwn": "Spieler dürfen einlegen",
+  "CLOOT.On": "an",
+  "CLOOT.Off": "aus"
 }
