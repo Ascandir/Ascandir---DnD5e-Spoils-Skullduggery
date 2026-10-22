@@ -321,6 +321,7 @@ function buildState(ctx) {
           canTake: can,
           canGroup: can && Boolean(group),
           canManage: ctx.isGM,
+          canStock: ctx.isGM || (ctx.isBox && ctx.canTake),
           grants: successThieves.map((th) => ({ actorId: th.actorId, name: th.name, short: th.short, on: th.all || th.items.includes(i.id) }))
         };
       });
@@ -728,9 +729,10 @@ async function gmAdd(ctx, p) {
   return { ok: true, state: buildState(ctx) };
 }
 
-/** Menge eines Gegenstands ändern (Plus/Minus im Fenster, nur Spielleitung). Mindestens 1. */
+/** Menge eines Gegenstands ändern (Plus/Minus im Fenster). Mindestens 1. */
 async function gmQty(ctx, p) {
-  if (!ctx.isGM) return fail("CLOOT.Err.GMOnly");
+  // Spielleitung immer; bei Truhen auch Spieler in Reichweite (offene Truhe)
+  if (!ctx.isGM && !(ctx.isBox && ctx.canTake)) return fail("CLOOT.Err.GMOnly");
   const item = ctx.actor.items.get(p.itemId);
   if (!item || item.system?.quantity === undefined) return fail("CLOOT.Err.ItemGone");
   const qty = Math.max(1, Math.floor(Number(p.qty) || 1));
