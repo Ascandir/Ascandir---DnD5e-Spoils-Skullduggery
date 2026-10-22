@@ -24,6 +24,8 @@ export class LootApp extends Base {
     actions: {
       take: LootApp.onTake,
       qtyPlus: LootApp.onQtyPlus,
+      takePlus: LootApp.onTakePlus,
+      takeMinus: LootApp.onTakeMinus,
       qtyMinus: LootApp.onQtyMinus,
       coins: LootApp.onCoins,
       all: LootApp.onAll,
@@ -159,6 +161,22 @@ export class LootApp extends Base {
 
   static onQtyMinus(event, target) {
     return LootApp.onQtyStep.call(this, event, target, -1);
+  }
+
+  /** Spieler: Menge, die sie mitnehmen wollen (ändert nichts an der Truhe) */
+  static stepTake(event, target, delta) {
+    const input = target.closest("[data-item-id]")?.querySelector("input[data-role='qty']");
+    if (!input) return;
+    const max = Number(input.max) || 1;
+    input.value = Math.min(max, Math.max(1, (Number(input.value) || 1) + delta * (event.shiftKey ? 10 : 1)));
+  }
+
+  static onTakePlus(event, target) {
+    LootApp.stepTake(event, target, 1);
+  }
+
+  static onTakeMinus(event, target) {
+    LootApp.stepTake(event, target, -1);
   }
 
   static async onTake(event, target) {

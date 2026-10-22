@@ -1,4 +1,4 @@
-# Ascandir - DnD5e Spoils & Skullduggery v0.28.0
+# Ascandir - DnD5e Spoils & Skullduggery v0.28.1
 
 Tote NSCs und Spielercharaktere (Totenkopf-Status) lassen sich im Umkreis plündern. D&D 5e, Foundry v13/v14.
 
@@ -175,7 +175,7 @@ Im Container-Bogen wählst du das **Typ**: *Truhe* (Holz mit Eisenbeschlägen un
 
 Gleiche Gegenstände im Container werden automatisch **gestapelt**: beim Ablegen auf den Bogen, beim Würfeln der Loottable und bei der Ernte. Der Button **Gleiche Gegenstände stapeln** im Bogen fasst schon vorhandene Duplikate zusammen. Ausgerüstete, eingestimmte oder unterschiedlich benannte Gegenstände bleiben getrennt.
 
-Im Beute-Fenster einer Truhe hat die Spielleitung bei jedem Gegenstand **Plus und Minus** (mit Umschalt in 10er-Schritten) und ein Mengenfeld. Spieler ziehen Gegenstände aus ihrem Inventar **in das Beute-Fenster** der Truhe: Sie müssen in Reichweite stehen, die Truhe darf nicht verschlossen sein. Bei Stapeln wird nach der Menge gefragt.
+Im Beute-Fenster einer Truhe hat die Spielleitung bei jedem Gegenstand **Plus und Minus** (mit Umschalt in 10er-Schritten) und ein Mengenfeld. Spieler haben bei Stapeln Plus und Minus für die Menge, die sie mitnehmen. Sie ziehen Gegenstände aus ihrem Inventar **in das Beute-Fenster** der Truhe: Sie müssen in Reichweite stehen, die Truhe darf nicht verschlossen sein. Bei Stapeln wird nach der Menge gefragt.
 
 Der Container-Bogen funktioniert wie ein Inventar:
 - Jeder Gegenstand hat **Plus und Minus** und ein Mengenfeld (mit Umschalt-Taste in 10er-Schritten). Zum Entfernen gibt es den Papierkorb.
