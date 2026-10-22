@@ -128,7 +128,7 @@
       </ul>
       {{/if}}
 
-      <ul class="bag-rows bag-items {{#if state.isGM}}bag-droppable{{/if}}" {{#if state.isGM}}data-gm-drop{{/if}}>
+      <ul class="bag-rows bag-items {{#if state.canDeposit}}bag-droppable{{else if state.isGM}}bag-droppable{{/if}}" {{#if state.canDeposit}}data-gm-drop{{else if state.isGM}}data-gm-drop{{/if}}>
         {{#each state.items}}
         <li class="bag-row bag-item" data-item-id="{{id}}">
           <span class="bag-ico"><img src="{{img}}" alt=""></span>
@@ -136,8 +136,15 @@
           <span class="bag-col">{{weight}}</span>
           <span class="bag-col">{{price}}</span>
           <span class="bag-actions">
+            {{#if canManage}}{{#if hasQty}}
+              <span class="bag-stepper">
+                <button type="button" class="bag-ibtn" data-action="qtyMinus" data-tooltip="CLOOT.Container.Minus"><i class="fa-solid fa-minus"></i></button>
+                <input type="number" data-role="stock" min="1" step="1" value="{{qty}}" aria-label="{{localize 'CLOOT.Table.Amount'}}">
+                <button type="button" class="bag-ibtn" data-action="qtyPlus" data-tooltip="CLOOT.Container.Plus"><i class="fa-solid fa-plus"></i></button>
+              </span>
+            {{/if}}{{/if}}
             {{#if canTake}}
-              {{#if multi}}<input type="number" data-role="qty" min="1" max="{{qty}}" value="{{qty}}" aria-label="{{localize 'CLOOT.Table.Amount'}}">{{/if}}
+              {{#if multi}}{{#unless canManage}}<input type="number" data-role="qty" min="1" max="{{qty}}" value="{{qty}}" aria-label="{{localize 'CLOOT.Table.Amount'}}">{{/unless}}{{/if}}
               <button type="button" class="bag-ibtn" data-action="take" data-to="self" data-tooltip="CLOOT.Take"><i class="fa-solid fa-hand"></i></button>
               {{#if canGroup}}<button type="button" class="bag-ibtn" data-action="take" data-to="group" data-tooltip="CLOOT.ToGroup"><i class="fa-solid fa-people-group"></i></button>{{/if}}
             {{/if}}
@@ -149,6 +156,8 @@
         {{/each}}
         {{#if state.isGM}}
         <li class="bag-row bag-add"><span class="bag-ico bag-ico-fa"><i class="fa-solid fa-plus"></i></span><span class="bag-name">{{localize "CLOOT.GMDrop"}}</span></li>
+        {{else if state.canDeposit}}
+        <li class="bag-row bag-add"><span class="bag-ico bag-ico-fa"><i class="fa-solid fa-plus"></i></span><span class="bag-name">{{localize "CLOOT.Container.DropHint"}}</span></li>
         {{else unless state.items.length}}
         <li class="bag-row bag-add"><span class="bag-name">{{localize "CLOOT.NoItems"}}</span></li>
         {{/if}}

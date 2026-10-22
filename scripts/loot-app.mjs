@@ -23,6 +23,8 @@ export class LootApp extends Base {
     window: { icon: "fa-solid fa-sack-dollar", resizable: true },
     actions: {
       take: LootApp.onTake,
+      qtyPlus: LootApp.onQtyPlus,
+      qtyMinus: LootApp.onQtyMinus,
       coins: LootApp.onCoins,
       all: LootApp.onAll,
       release: LootApp.onRelease,
@@ -100,7 +102,11 @@ export class LootApp extends Base {
     // Der Titel kennt den Namen erst nach dem Laden der Daten
     const titleEl = this.element.querySelector(".window-title");
     if (titleEl) titleEl.textContent = this.title;
-    // Spielleitung: Gegenstände ins Fenster ziehen, um sie dem Token zu geben
+    // Mengenfeld (Spielleitung): Änderung speichern
+    for (const input of this.element.querySelectorAll("input[data-role='stock']")) {
+      input.addEventListener("change", () => this.act("gmQty", { itemId: input.closest("[data-item-id]")?.dataset.itemId, qty: input.value }));
+    }
+    // Gegenstände ins Fenster ziehen: Spielleitung gibt sie dem Token, Spieler legen eigene in einen Container
     for (const zone of this.element.querySelectorAll("[data-gm-drop]")) {
       zone.addEventListener("dragenter", () => zone.classList.add("dragover"));
       zone.addEventListener("dragleave", (ev) => {
@@ -116,7 +122,13 @@ export class LootApp extends Base {
         } catch {
           return;
         }
-        if (data?.type === "Item" && data.uuid) await this.act("gmAdd", { uuid: data.uuid });
+        if (data?.type !== "Item" || !data.uuid) return;
+        const item = await fromUuid(data.uuid);
+        if (item?.parent instanceof Actor) {
+          // Aus einem Inventar: verschieben (bei Stapeln wird nach der Menge gefragt)
+          const qty = await Service.askDepositQty(item);
+          if (qty) await this.act("depositHere", { itemUuid: item.uuid, qty });
+        } else if (game.user.isGM) await this.act("gmAdd", { uuid: data.uuid });
       });
     }
   }
@@ -132,6 +144,21 @@ export class LootApp extends Base {
       this._busy = false;
       this.render();
     }
+  }
+
+  static async onQtyStep(event, target, delta) {
+    const row = target.closest("[data-item-id]");
+    const input = row?.querySelector("input[data-role='stock']");
+    const step = event.shiftKey ? 10 : 1;
+    await this.act("gmQty", { itemId: row?.dataset.itemId, qty: (Number(input?.value) || 1) + delta * step });
+  }
+
+  static onQtyPlus(event, target) {
+    return LootApp.onQtyStep.call(this, event, target, 1);
+  }
+
+  static onQtyMinus(event, target) {
+    return LootApp.onQtyStep.call(this, event, target, -1);
   }
 
   static async onTake(event, target) {

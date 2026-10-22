@@ -182,18 +182,8 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
         return;
       }
       // Aus dem Inventar eines Actors: verschieben (bei Stapeln wird nach der Menge gefragt)
-      const max = item.type === "container" ? 1 : Number(item.system?.quantity ?? 1) || 1;
-      let qty = max;
-      if (max > 1) {
-        const field = `<div class="form-group"><label>${t("CLOOT.Container.HowMany")}</label><div class="form-fields"><input type="number" name="qty" min="1" max="${max}" step="1" value="${max}" autofocus></div></div>`;
-        const res = await foundry.applications.api.DialogV2.prompt({
-          window: { title: item.name },
-          content: field,
-          ok: { label: t("CLOOT.Container.Deposit"), callback: (ev, button) => Number(button.form.elements.qty.value) }
-        }).catch(() => null);
-        if (!res) return;
-        qty = Math.min(max, Math.max(1, Math.floor(res)));
-      }
+      const qty = await Service.askDepositQty(item);
+      if (!qty) return;
       // Mit Besitzerrecht an beiden Seiten geht es sofort, ganz ohne Spielleiter. Sonst macht es die Spielleitung.
       if (actor.isOwner && item.parent.isOwner) {
         await Service.moveItemTo(item, actor, qty);

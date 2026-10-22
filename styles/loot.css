@@ -505,3 +505,10 @@
 .cl-ctx button:hover { color: #fff; border-color: color-mix(in srgb, var(--corpse-loot-accent, #7a1f27) 85%, #000); background: linear-gradient(90deg, color-mix(in srgb, var(--corpse-loot-accent, #7a1f27) 95%, #000), color-mix(in srgb, var(--corpse-loot-accent, #7a1f27) 22%, transparent)); }
 .cl-ctx i { width: 1.2em; text-align: center; }
 .cl-cont-stack { display: flex; justify-content: flex-end; margin: 0.3rem 0; }
+
+/* Plus/Minus im Beute-Fenster (Spielleitung) */
+.bag-stepper { display: inline-flex; align-items: center; gap: 0.2rem; }
+.bag-stepper .bag-ibtn { width: 1.9rem; }
+.bag-panel .bag-stepper input[type="number"] { width: 3.2rem; }
+.bag-row:has(.bag-stepper) { grid-template-columns: 3rem minmax(0, 1fr) 4.8rem 4.8rem 14rem; }
+@container bag (max-width: 560px) { .bag-row:has(.bag-stepper) { grid-template-columns: 3rem minmax(0, 1fr) auto; } }

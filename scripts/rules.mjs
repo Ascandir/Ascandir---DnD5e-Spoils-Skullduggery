@@ -71,6 +71,7 @@ export function buildItemView(item, { isGM }) {
     qty,
     multi: qty > 1,
     isContainer: item.type === "container",
+    hasQty: item.type !== "container" && item.system?.quantity !== undefined,
     weight: weight?.value ? `${round(weight.value)} ${weight.units ?? ""}`.trim() : "",
     price: price?.value ? `${round(price.value)} ${price.denomination ?? ""}`.trim() : "",
     unidentified: item.system?.identified === false

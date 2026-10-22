@@ -274,6 +274,10 @@ export async function gmHandle(user, op, p) {
       return gmAdd(ctx, p);
     case "gmRemove":
       return gmRemove(ctx, p);
+    case "gmQty":
+      return gmQty(ctx, p);
+    case "depositHere":
+      return depositHere(ctx, p);
     case "harvestCheck":
       return harvestCheck(ctx, p);
     case "harvestResolve":
@@ -344,6 +348,7 @@ function buildState(ctx) {
     boxLocked: ctx.boxLocked,
     boxLockedGM: ctx.isBox && ctx.isGM && Boolean(ctx.corpse.getFlag(MODULE_ID, "boxLocked")),
     canTake: ctx.canTake,
+    canDeposit: ctx.isBox && (ctx.isGM || ctx.canTake),
     canTakeCoins,
     canTakeAny: items.some((i) => i.canTake) || (coins.length > 0 && canTakeCoins),
     looterName: ctx.looter?.name ?? "",
@@ -721,6 +726,50 @@ async function gmAdd(ctx, p) {
   }
   changed(ctx.corpse.uuid);
   return { ok: true, state: buildState(ctx) };
+}
+
+/** Menge eines Gegenstands ändern (Plus/Minus im Fenster, nur Spielleitung). Mindestens 1. */
+async function gmQty(ctx, p) {
+  if (!ctx.isGM) return fail("CLOOT.Err.GMOnly");
+  const item = ctx.actor.items.get(p.itemId);
+  if (!item || item.system?.quantity === undefined) return fail("CLOOT.Err.ItemGone");
+  const qty = Math.max(1, Math.floor(Number(p.qty) || 1));
+  if (qty !== Number(item.system.quantity)) await item.update({ "system.quantity": qty });
+  changed(ctx.corpse.uuid);
+  return { ok: true, state: buildState(ctx) };
+}
+
+/**
+ * Ein Spieler legt einen Gegenstand aus seinem Inventar in einen Container (Beute-Fenster).
+ * Er muss mit seinem Token in Reichweite stehen und der Container darf nicht verschlossen sein.
+ */
+async function depositHere(ctx, p) {
+  if (!ctx.isBox) return fail("CLOOT.Err.Internal");
+  if (!ctx.isGM && !ctx.canTake) return fail(ctx.boxLocked ? "CLOOT.Box.Closed" : "CLOOT.Err.NoLooter");
+  const item = p.itemUuid ? await fromUuid(p.itemUuid) : null;
+  const src = item?.parent;
+  if (!item || !(src instanceof Actor)) return fail("CLOOT.Err.ItemGone");
+  if (src === ctx.actor) return fail("CLOOT.Err.Internal");
+  if (!ctx.isGM && !src.testUserPermission(ctx.user, "OWNER")) return fail("CLOOT.Err.NotYourToken");
+  if (item.system?.container) return fail("CLOOT.Err.Internal");
+  const max = item.type === "container" ? 1 : Number(item.system?.quantity ?? 1) || 1;
+  const qty = Math.min(max, Math.max(1, Math.floor(Number(p.qty) || max)));
+  await moveItemTo(item, ctx.actor, qty);
+  changed(ctx.corpse.uuid);
+  return { ok: true, state: buildState(ctx) };
+}
+
+/** Fragt bei Stapeln, wie viele eingelegt werden sollen. Gibt die Menge zurück oder null (abgebrochen). */
+export async function askDepositQty(item) {
+  const max = item.type === "container" ? 1 : Number(item.system?.quantity ?? 1) || 1;
+  if (max <= 1) return 1;
+  const field = `<div class="form-group"><label>${game.i18n.localize("CLOOT.Container.HowMany")}</label><div class="form-fields"><input type="number" name="qty" min="1" max="${max}" step="1" value="${max}" autofocus></div></div>`;
+  const res = await foundry.applications.api.DialogV2.prompt({
+    window: { title: item.name },
+    content: field,
+    ok: { label: game.i18n.localize("CLOOT.Container.Deposit"), callback: (ev, button) => Number(button.form.elements.qty.value) }
+  }).catch(() => null);
+  return res ? Math.min(max, Math.max(1, Math.floor(res))) : null;
 }
 
 async function gmRemove(ctx, p) {
