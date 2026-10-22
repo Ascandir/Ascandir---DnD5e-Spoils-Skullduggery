@@ -481,11 +481,14 @@
 /* ---------- Scrollen bei vielen Gegenständen ---------- */
 .bag-panel > * { flex-shrink: 0; }
 .bag-panel > .bag-items { flex: 1 1 auto; min-height: 4rem; flex-shrink: 1; }
-.bag-items { max-height: max(14rem, calc(100vh - 380px)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #8a6a3a rgba(0, 0, 0, 0.35); }
+.bag-items { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #8a6a3a rgba(0, 0, 0, 0.35); }
 .bag-items::-webkit-scrollbar { width: 9px; }
 .bag-items::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.35); border-radius: 5px; }
 .bag-items::-webkit-scrollbar-thumb { background: #8a6a3a; border-radius: 5px; border: 1px solid #2c1d13; }
-.cl-bag.cl-chest .bag-items { max-height: max(14rem, calc(100vh - 400px)); }
+/* Das Fenster wird nie höher als der Bildschirm: Die Liste nimmt den übrigen Platz, scrollt, und wächst beim Vergrößern mit */
+.application:has(.cl-bag) { max-height: calc(100vh - 24px); }
+.window-content:has(> .cl-bag) { min-height: 0; }
+.cl-bag { max-height: 100%; }
 
 /* ---------- Truhe aus Holzplanken (Container, Aussehen "Truhe") ---------- */
 .cl-chest .cl-sprite { position: absolute; z-index: 4; left: 50%; top: 20px; width: 86px; height: auto; transform: translateX(-50%); pointer-events: none; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.6)); }
