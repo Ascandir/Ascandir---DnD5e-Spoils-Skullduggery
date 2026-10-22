@@ -254,6 +254,7 @@ function resolve(user, p) {
 
 export async function gmHandle(user, op, p) {
   if (op.startsWith("door")) return doorHandle(user, op, p);
+  if (op === "deposit") return depositItem(user, p);
   const ctx = resolve(user, p);
   if (!ctx.ok) return ctx;
   switch (op) {
@@ -475,6 +476,29 @@ async function moveItem(srcActor, item, qty, dstActor) {
   } else {
     await item.update({ "system.quantity": max - qty });
   }
+}
+
+/**
+ * Ein Spieler zieht einen Gegenstand aus seinem Inventar in einen Container-Actor.
+ * Läuft beim Spielleiter: prüft die Rechte, legt den Gegenstand im Container ab (stapelt) und nimmt ihn dem Spieler weg.
+ */
+async function depositItem(user, p) {
+  const item = p.itemUuid ? await fromUuid(p.itemUuid) : null;
+  const dst = p.actorUuid ? await fromUuid(p.actorUuid) : null;
+  const src = item?.parent;
+  if (!item || !(src instanceof Actor)) return fail("CLOOT.Err.ItemGone");
+  if (!dst || dst.type !== CONTAINER_TYPE || dst === src) return fail("CLOOT.Err.Internal");
+  if (!user.isGM) {
+    if (!src.testUserPermission(user, "OWNER")) return fail("CLOOT.Err.NotYourToken");
+    if (!dst.testUserPermission(user, "LIMITED")) return fail("CLOOT.Err.Internal");
+    if (dst.token?.getFlag(MODULE_ID, "boxLocked")) return fail("CLOOT.Box.Closed");
+  }
+  if (item.system?.container) return fail("CLOOT.Err.Internal"); // Inhalt eines Beutels: den Beutel selbst ziehen
+  const max = item.type === "container" ? 1 : Number(item.system?.quantity ?? 1) || 1;
+  const qty = Math.min(max, Math.max(1, Math.floor(Number(p.qty) || max)));
+  await moveItem(src, item, qty, dst);
+  if (dst.token) changed(dst.token.uuid);
+  return { ok: true, name: item.name, qty };
 }
 
 async function copyTree(src, dst, parentId, qty) {

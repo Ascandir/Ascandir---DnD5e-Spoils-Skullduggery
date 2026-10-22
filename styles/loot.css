@@ -472,6 +472,10 @@
 .cl-cont-items li:first-child { border-top: 0; }
 .cl-cont-items img { width: 30px; height: 30px; border-radius: 3px; }
 .cl-cont-items .n { flex: 1; }
+.cl-qtybox { display: inline-flex; align-items: center; gap: 2px; }
+.cl-container .cl-qbtn { width: 24px; height: 24px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; }
+.cl-container input.cl-qty { width: 52px; height: 24px; text-align: center; }
+.cl-qtyview { color: #f0c878; font-style: normal; font-weight: 600; }
 .cl-cont-drop { justify-content: center; color: #b9a584; font-style: italic; }
 
 /* ---------- Scrollen bei vielen Gegenständen ---------- */

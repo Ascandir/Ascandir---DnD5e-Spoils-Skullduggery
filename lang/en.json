@@ -272,5 +272,10 @@
   "CLOOT.TitlePlayer": "Loot",
   "CLOOT.Harvest.Tries": "Attempts",
   "CLOOT.Harvest.TriesHint": "How often each character may try this harvest. Rolls are counted. Empty = unlimited.",
-  "CLOOT.Menu.Harvest": "Harvest"
+  "CLOOT.Menu.Harvest": "Harvest",
+  "CLOOT.Container.HowMany": "How many to put in?",
+  "CLOOT.Container.Deposit": "Put in",
+  "CLOOT.Container.Plus": "One more (Shift: 10)",
+  "CLOOT.Container.Minus": "One less (Shift: 10)",
+  "CLOOT.Container.DropHint": "Drag items from an inventory here"
 }

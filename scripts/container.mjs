@@ -1,3 +1,4 @@
+import * as Service from "./service.mjs";
 import { MODULE_ID, CONTAINER_TYPE, COINS, isLootableItem, buildItemView, stackKey, mergeStacks } from "./rules.mjs";
 
 const t = (key, data) => (data ? game.i18n.format(key, data) : game.i18n.localize(key));
@@ -52,7 +53,9 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
         removeItem: ContainerSheet.onRemoveItem,
         editTable: ContainerSheet.onEditTable,
         editLock: ContainerSheet.onEditLock,
-        mergeStacks: ContainerSheet.onMergeStacks
+        mergeStacks: ContainerSheet.onMergeStacks,
+        qtyPlus: ContainerSheet.onQtyPlus,
+        qtyMinus: ContainerSheet.onQtyMinus
       }
     };
 
@@ -63,7 +66,7 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
     async _prepareContext(options) {
       const context = await super._prepareContext(options);
       const actor = this.document;
-      const items = actor.items.filter((i) => isLootableItem(i, { nested: true })).map((i) => buildItemView(i, { isGM: true }));
+      const items = actor.items.filter((i) => isLootableItem(i, { nested: true })).map((i) => ({ ...buildItemView(i, { isGM: true }), hasQty: i.type !== "container" && i.system?.quantity !== undefined }));
       return {
         ...context,
         actor,
@@ -96,19 +99,87 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
       ui.notifications.info(t(n ? "CLOOT.Container.Merged" : "CLOOT.Container.NothingToMerge", { n }));
     }
 
-    /** Gleiche Gegenstände landen auf einem Stapel, statt als neue Zeile. */
-    async _onDropItem(event, item) {
+    /** Menge ändern (Plus/Minus und Eingabefeld). Nur für Besitzer; mindestens 1, zum Entfernen gibt es den Papierkorb. */
+    async setQty(itemId, value) {
+      const item = this.document.items.get(itemId);
+      if (!item || !this.isEditable) return;
+      const qty = Math.max(1, Math.floor(Number(value) || 1));
+      if (qty !== Number(item.system.quantity)) await item.update({ "system.quantity": qty });
+    }
+
+    static async onQtyPlus(event, target) {
+      const item = this.document.items.get(target.dataset.itemId);
+      if (item) await this.setQty(item.id, (Number(item.system.quantity) || 0) + (event.shiftKey ? 10 : 1));
+    }
+
+    static async onQtyMinus(event, target) {
+      const item = this.document.items.get(target.dataset.itemId);
+      if (item) await this.setQty(item.id, (Number(item.system.quantity) || 0) - (event.shiftKey ? 10 : 1));
+    }
+
+    async _onRender(context, options) {
+      await super._onRender(context, options);
+      const root = this.element;
+      // Mengenfeld: Änderung speichern
+      for (const input of root.querySelectorAll("input.cl-qty")) {
+        input.addEventListener("change", () => this.setQty(input.dataset.itemId, input.value));
+      }
+      // Eigener Drop: Gegenstände aus dem Inventar eines Spielers wandern in den Container (und verschwinden dort)
+      if (!root._clDrop) {
+        root._clDrop = true;
+        root.addEventListener("dragover", (ev) => ev.preventDefault(), true);
+        root.addEventListener(
+          "drop",
+          (ev) => {
+            const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(ev);
+            if (data?.type !== "Item") return; // Münzen, Beschreibung usw. laufen weiter wie gewohnt
+            ev.preventDefault();
+            ev.stopImmediatePropagation();
+            this.dropItem(data).catch((err) => {
+              console.error(`${MODULE_ID} |`, err);
+              ui.notifications.error(t("CLOOT.Err.Crash", { msg: err?.message ?? String(err) }));
+            });
+          },
+          true
+        );
+      }
+    }
+
+    /** Einen gezogenen Gegenstand ablegen: aus einem Inventar verschieben, aus der Gegenstandsliste kopieren. */
+    async dropItem(data) {
       const actor = this.document;
-      if (this.isEditable && item?.parent !== actor) {
+      const item = await Item.implementation.fromDropData(data);
+      if (!item || item.parent === actor) return;
+      // Aus der Gegenstandsliste oder einem Kompendium: nur die Spielleitung, als Kopie (gestapelt)
+      if (!item.parent) {
+        if (!game.user.isGM) return;
         const key = stackKey(item);
         const target = key ? actor.items.find((i) => stackKey(i) === key) : null;
         if (target) {
-          const add = Number(item.system.quantity) || 1;
-          await target.update({ "system.quantity": (Number(target.system.quantity) || 0) + add });
-          return target;
+          await target.update({ "system.quantity": (Number(target.system.quantity) || 0) + (Number(item.system.quantity) || 1) });
+          return;
         }
+        const copy = item.toObject();
+        delete copy._id;
+        copy.system.container = null;
+        await actor.createEmbeddedDocuments("Item", [copy]);
+        return;
       }
-      return super._onDropItem(event, item);
+      // Aus dem Inventar eines Actors: verschieben (bei Stapeln wird nach der Menge gefragt)
+      const max = item.type === "container" ? 1 : Number(item.system?.quantity ?? 1) || 1;
+      let qty = max;
+      if (max > 1) {
+        const field = `<div class="form-group"><label>${t("CLOOT.Container.HowMany")}</label><div class="form-fields"><input type="number" name="qty" min="1" max="${max}" step="1" value="${max}" autofocus></div></div>`;
+        const res = await foundry.applications.api.DialogV2.prompt({
+          window: { title: item.name },
+          content: field,
+          ok: { label: t("CLOOT.Container.Deposit"), callback: (ev, button) => Number(button.form.elements.qty.value) }
+        }).catch(() => null);
+        if (!res) return;
+        qty = Math.min(max, Math.max(1, Math.floor(res)));
+      }
+      const res = await Service.request("deposit", { itemUuid: item.uuid, actorUuid: actor.uuid, qty });
+      if (!res.ok) ui.notifications.warn(Service.errorText(res));
     }
 
     static async onEditTable() {
