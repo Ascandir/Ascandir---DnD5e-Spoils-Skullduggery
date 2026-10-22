@@ -55,7 +55,9 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
         editTable: ContainerSheet.onEditTable,
         editLock: ContainerSheet.onEditLock,
         mergeStacks: ContainerSheet.onMergeStacks,
-        playersOwn: ContainerSheet.onPlayersOwn
+        playersOwn: ContainerSheet.onPlayersOwn,
+        qtyPlus: ContainerSheet.onQtyPlus,
+        qtyMinus: ContainerSheet.onQtyMinus
       }
     };
 
@@ -66,7 +68,7 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
     async _prepareContext(options) {
       const context = await super._prepareContext(options);
       const actor = this.document;
-      const items = actor.items.filter((i) => isLootableItem(i, { nested: true })).map((i) => buildItemView(i, { isGM: true }));
+      const items = actor.items.filter((i) => isLootableItem(i, { nested: true })).map((i) => ({ ...buildItemView(i, { isGM: true }), hasQty: i.type !== "container" && i.system?.quantity !== undefined }));
       return {
         ...context,
         actor,
@@ -105,6 +107,7 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
     }
 
     static async onRemoveItem(event, target) {
+      if (!game.user.isGM) return;
       await this.document.items.get(target.dataset.itemId)?.delete();
     }
 
@@ -113,9 +116,31 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
       ui.notifications.info(t(n ? "CLOOT.Container.Merged" : "CLOOT.Container.NothingToMerge", { n }));
     }
 
+    /** Menge ändern (Plus/Minus und Eingabefeld). Nur für Besitzer; mindestens 1, zum Entfernen gibt es den Papierkorb. */
+    async setQty(itemId, value) {
+      const item = this.document.items.get(itemId);
+      if (!item || !this.isEditable || !game.user.isGM) return;
+      const qty = Math.max(1, Math.floor(Number(value) || 1));
+      if (qty !== Number(item.system.quantity)) await item.update({ "system.quantity": qty });
+    }
+
+    static async onQtyPlus(event, target) {
+      const item = this.document.items.get(target.dataset.itemId);
+      if (item) await this.setQty(item.id, (Number(item.system.quantity) || 0) + (event.shiftKey ? 10 : 1));
+    }
+
+    static async onQtyMinus(event, target) {
+      const item = this.document.items.get(target.dataset.itemId);
+      if (item) await this.setQty(item.id, (Number(item.system.quantity) || 0) - (event.shiftKey ? 10 : 1));
+    }
+
     async _onRender(context, options) {
       await super._onRender(context, options);
       const root = this.element;
+      // Mengenfeld: Änderung speichern
+      for (const input of root.querySelectorAll("input.cl-qty")) {
+        input.addEventListener("change", () => this.setQty(input.dataset.itemId, input.value));
+      }
       // Eigener Drop: Gegenstände aus dem Inventar eines Spielers wandern in den Container (und verschwinden dort)
       if (!root._clDrop) {
         root._clDrop = true;

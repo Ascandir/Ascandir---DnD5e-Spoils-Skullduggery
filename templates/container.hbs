@@ -40,10 +40,19 @@
   <ul class="cl-cont-items" data-drop>
     {{#each items}}
     <li>
-      <img src="{{img}}" alt=""><span class="n">{{name}}{{#if multi}} <em>×{{qty}}</em>{{/if}}</span>
-      <button type="button" data-action="removeItem" data-item-id="{{id}}" data-tooltip="CLOOT.Table.Remove"><i class="fa-solid fa-trash"></i></button>
+      <img src="{{img}}" alt=""><span class="n">{{name}}</span>
+      {{#if hasQty}}
+      {{#if ../isGM}}
+      <span class="cl-qtybox">
+        <button type="button" class="cl-qbtn" data-action="qtyMinus" data-item-id="{{id}}" data-tooltip="CLOOT.Container.Minus"><i class="fa-solid fa-minus"></i></button>
+        <input type="number" class="cl-qty" data-item-id="{{id}}" min="1" step="1" value="{{qty}}">
+        <button type="button" class="cl-qbtn" data-action="qtyPlus" data-item-id="{{id}}" data-tooltip="CLOOT.Container.Plus"><i class="fa-solid fa-plus"></i></button>
+      </span>
+      {{else}}<em class="cl-qtyview">×{{qty}}</em>{{/if}}
+      {{/if}}
+      {{#if ../isGM}}<button type="button" data-action="removeItem" data-item-id="{{id}}" data-tooltip="CLOOT.Table.Remove"><i class="fa-solid fa-trash"></i></button>{{/if}}
     </li>
     {{/each}}
-    <li class="cl-cont-drop"><i class="fa-solid fa-plus"></i> {{localize "CLOOT.GMDrop"}}</li>
+    <li class="cl-cont-drop"><i class="fa-solid fa-plus"></i> {{localize "CLOOT.Container.DropHint"}}</li>
   </ul>
 </div>
