@@ -107,7 +107,6 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
     }
 
     static async onRemoveItem(event, target) {
-      if (!game.user.isGM) return;
       await this.document.items.get(target.dataset.itemId)?.delete();
     }
 
@@ -119,7 +118,7 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
     /** Menge ändern (Plus/Minus und Eingabefeld). Nur für Besitzer; mindestens 1, zum Entfernen gibt es den Papierkorb. */
     async setQty(itemId, value) {
       const item = this.document.items.get(itemId);
-      if (!item || !this.isEditable || !game.user.isGM) return;
+      if (!item || !this.isEditable) return;
       const qty = Math.max(1, Math.floor(Number(value) || 1));
       if (qty !== Number(item.system.quantity)) await item.update({ "system.quantity": qty });
     }

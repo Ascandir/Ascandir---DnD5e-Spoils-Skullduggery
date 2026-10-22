@@ -1,4 +1,4 @@
-# Ascandir - DnD5e Spoils & Skullduggery v0.27.1
+# Ascandir - DnD5e Spoils & Skullduggery v0.27.3
 
 Tote NSCs und Spielercharaktere (Totenkopf-Status) lassen sich im Umkreis plündern. D&D 5e, Foundry v13/v14.
 
@@ -177,7 +177,7 @@ Gleiche Gegenstände im Container werden automatisch **gestapelt**: beim Ablegen
 
 Der Container-Bogen funktioniert wie ein Inventar:
 - Jeder Gegenstand hat **Plus und Minus** und ein Mengenfeld (mit Umschalt-Taste in 10er-Schritten). Zum Entfernen gibt es den Papierkorb.
-- Spieler **ziehen Gegenstände aus ihrem Inventar** auf den Container-Bogen, ganz ohne Spielleiter. Der Gegenstand verschwindet beim Spieler und liegt im Container (bei Stapeln wird nach der Menge gefragt, gleiche Gegenstände werden gestapelt). Dafür braucht der Spieler Besitzerrechte am Container: Neue Container bekommen sie automatisch, bei bestehenden schaltet der Knopf **Spieler dürfen einlegen** im Bogen (Spielleitung) das um. Plus/Minus, Menge und Papierkorb im Bogen bleiben der Spielleitung vorbehalten; herausnehmen tun Spieler über das Beute-Fenster.
+- Spieler **ziehen Gegenstände aus ihrem Inventar** auf den Container-Bogen, ganz ohne Spielleiter. Der Gegenstand verschwindet beim Spieler und liegt im Container (bei Stapeln wird nach der Menge gefragt, gleiche Gegenstände werden gestapelt). Dafür braucht der Spieler Besitzerrechte am Container: Neue Container bekommen sie automatisch, bei bestehenden schaltet der Knopf **Spieler dürfen einlegen** im Bogen (Spielleitung) das um.
 
 Dritter Typ: **Ressource** (Steinrahmen).  Die Versuche zählen dabei weiter herunter (auch ein Erfolg verbraucht einen), danach ist die Ressource für den Charakter erschöpft. Nach jeder erfolgreichen Ernte wird die Ernte-Stufe zurückgesetzt und die Loottable neu gewürfelt, der Container ist also sofort wieder erntbar. Der Ertrag der Ernte landet im Container und bleibt dort, bis er genommen wird. Gedacht für eigene Crafting-Systeme (Erzadern, Kräuterbeete usw.).
 
