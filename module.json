@@ -2,7 +2,7 @@
   "id": "corpse-loot",
   "title": "Ascandir - DnD5e Spoils & Skullduggery",
   "description": "Beute plündern, Tiere ausnehmen, Taschen ausräumen, Schlösser knacken: Plündern von Leichen (Beute-Tabellen, Ernte, Item Piles), Taschendiebstahl bei lebenden Token (NSC und Spielercharaktere) und verschlossene Türen mit Schlüsseln und Diebeswerkzeug.",
-  "version": "0.28.2",
+  "version": "0.28.3",
   "authors": [
     {
       "name": "Ascandir"
@@ -10,7 +10,7 @@
   ],
   "compatibility": {
     "minimum": "13",
-    "verified": "14.368"
+    "verified": "14.369.1"
   },
   "relationships": {
     "requires": [
