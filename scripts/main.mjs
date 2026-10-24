@@ -162,6 +162,9 @@ function applyAccent() {
 /** Auf dem Spieler-PC prüfen wir nur grob. Die endgültige Prüfung macht immer die Spielleitung. */
 const isDeadClient = (td) => Boolean(td?.hasStatusEffect?.("dead") || td?.hasStatusEffect?.("unconscious") || td?.actor?.statuses?.has("dead") || td?.actor?.statuses?.has("unconscious") || td?.actor?.type === CONTAINER_TYPE || td?.getFlag?.(MODULE_ID, "box"));
 
+/** Truhen und ähnliche Container: Auch wenn der Spieler sie besitzt, werden sie über „Looten“ geöffnet. */
+const isBoxClient = (td) => Boolean(td?.actor?.type === CONTAINER_TYPE || td?.getFlag?.(MODULE_ID, "box"));
+
 /**
  * Lebender NSC, den dieser Spieler bestehlen dürfte. Spieler kennen fremde NSC oft gar nicht als Actor
  * (keine Berechtigung), deshalb darf der Actor hier fehlen. Die endgültige Prüfung macht die Spielleitung.
@@ -559,7 +562,7 @@ export function onBoardContext(ev) {
     const point = canvas.canvasCoordinatesFromClient?.({ x: ev.clientX, y: ev.clientY }) ?? canvas.mousePosition;
     if (!point) return;
     const target = canvas.tokens.placeables
-      .filter((tk) => tk.visible && !tk.document.isOwner && (isDeadClient(tk.document) || isPickableClient(tk.document)) && tk.bounds.contains(point.x, point.y))
+      .filter((tk) => tk.visible && (!tk.document.isOwner || isBoxClient(tk.document)) && (isDeadClient(tk.document) || isPickableClient(tk.document)) && tk.bounds.contains(point.x, point.y))
       .sort((a, b) => (b.document.elevation ?? 0) - (a.document.elevation ?? 0))[0];
     if (!target) return;
     const loot = isDeadClient(target.document);
