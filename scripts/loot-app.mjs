@@ -23,6 +23,7 @@ export class LootApp extends Base {
     window: { icon: "fa-solid fa-sack-dollar", resizable: true },
     actions: {
       take: LootApp.onTake,
+      toggleInfo: LootApp.onToggleInfo,
       qtyPlus: LootApp.onQtyPlus,
       qtyMinus: LootApp.onQtyMinus,
       coins: LootApp.onCoins,
@@ -102,6 +103,11 @@ export class LootApp extends Base {
     // Der Titel kennt den Namen erst nach dem Laden der Daten
     const titleEl = this.element.querySelector(".window-title");
     if (titleEl) titleEl.textContent = this.title;
+    // Aufgeklappte Beschreibungen nach dem Neuzeichnen wieder öffnen
+    for (const id of this._open ?? []) {
+      const row = this.element.querySelector(`[data-item-id="${CSS.escape(id)}"]`);
+      if (row) this.setInfo(row, true);
+    }
     // Mengenfeld (Spielleitung): Änderung speichern
     for (const input of this.element.querySelectorAll("input[data-role='stock']")) {
       input.addEventListener("change", () => this.act("gmQty", { itemId: input.closest("[data-item-id]")?.dataset.itemId, qty: input.value }));
@@ -159,6 +165,34 @@ export class LootApp extends Base {
 
   static onQtyMinus(event, target) {
     return LootApp.onQtyStep.call(this, event, target, -1);
+  }
+
+  /** Beschreibung eines Gegenstands auf- oder zuklappen. */
+  static onToggleInfo(event, target) {
+    const row = target.closest("[data-item-id]");
+    if (!row) return;
+    const info = row.querySelector(".bag-info");
+    this.setInfo(row, Boolean(info?.hidden));
+  }
+
+  async setInfo(row, open) {
+    const info = row.querySelector(".bag-info");
+    if (!info) return;
+    this._open ??= new Set();
+    if (open) {
+      const box = info.querySelector(".bag-info-text");
+      if (box && !box.dataset.done) {
+        box.dataset.done = "1";
+        const raw = box.dataset.src ?? "";
+        try {
+          box.innerHTML = raw ? await foundry.applications.ux.TextEditor.implementation.enrichHTML(raw, { secrets: false }) : "";
+        } catch {
+          box.textContent = raw.replace(/<[^>]*>/g, " ");
+        }
+      }
+      this._open.add(row.dataset.itemId);
+    } else this._open.delete(row.dataset.itemId);
+    info.hidden = !open;
   }
 
   static async onTake(event, target) {

@@ -132,7 +132,7 @@
         {{#each state.items}}
         <li class="bag-row bag-item" data-item-id="{{id}}">
           <span class="bag-ico"><img src="{{img}}" alt=""></span>
-          <span class="bag-name" title="{{name}}">{{name}}{{#if multi}} <em>(x{{qty}})</em>{{/if}}</span>
+          <span class="bag-name {{#if hasInfo}}bag-clickable{{/if}}" title="{{name}}" {{#if hasInfo}}data-action="toggleInfo"{{/if}}>{{name}}{{#if multi}} <em>(x{{qty}})</em>{{/if}}{{#if hasInfo}} <i class="fa-solid fa-circle-info bag-infoicon"></i>{{/if}}</span>
           <span class="bag-col">{{weight}}</span>
           <span class="bag-col">{{price}}</span>
           <span class="bag-actions">
@@ -152,6 +152,10 @@
             {{#if grants.length}}<span class="bag-chips" data-tooltip="CLOOT.Pick.ItemFor">{{#each grants}}<button type="button" class="bag-chip {{#if on}}on{{/if}}" data-action="pickItem" data-actor="{{actorId}}" data-tooltip="{{name}}">{{short}}</button>{{/each}}</span>{{/if}}
             {{#if canManage}}<button type="button" class="bag-ibtn bag-danger" data-action="gmRemove" data-tooltip="CLOOT.Table.Remove"><i class="fa-solid fa-trash"></i></button>{{/if}}
           </span>
+          {{#if hasInfo}}<div class="bag-info" hidden>
+            <div class="bag-info-meta">{{#if rarity}}<span>{{rarity}}</span>{{/if}}{{#if weight}}<span>{{weight}}</span>{{/if}}{{#if price}}<span>{{price}}</span>{{/if}}</div>
+            <div class="bag-info-text" data-src="{{desc}}"></div>
+          </div>{{/if}}
         </li>
         {{/each}}
         {{#if state.isGM}}

@@ -74,7 +74,10 @@ export function buildItemView(item, { isGM }) {
     hasQty: item.type !== "container" && item.system?.quantity !== undefined,
     weight: weight?.value ? `${round(weight.value)} ${weight.units ?? ""}`.trim() : "",
     price: price?.value ? `${round(price.value)} ${price.denomination ?? ""}`.trim() : "",
-    unidentified: item.system?.identified === false
+    unidentified: item.system?.identified === false,
+    desc: String((hidden ? item.system?.unidentified?.description : item.system?.description?.value) ?? ""),
+    rarity: hidden ? "" : String(item.system?.rarity ?? ""),
+    hasInfo: Boolean((hidden ? item.system?.unidentified?.description : item.system?.description?.value) || weight?.value || price?.value)
   };
 }
 
