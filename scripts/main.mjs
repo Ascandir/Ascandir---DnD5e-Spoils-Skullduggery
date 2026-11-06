@@ -88,6 +88,22 @@ Hooks.once("init", () => {
     type: Boolean,
     default: true
   });
+  game.settings.register(MODULE_ID, "pickAutoGrant", {
+    name: "CLOOT.Setting.PickAutoGrant.Name",
+    hint: "CLOOT.Setting.PickAutoGrant.Hint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: false
+  });
+  game.settings.register(MODULE_ID, "plantAutoApprove", {
+    name: "CLOOT.Setting.PlantAutoApprove.Name",
+    hint: "CLOOT.Setting.PlantAutoApprove.Hint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: false
+  });
   // Pro Spieler: Beutel-Button im Rechtsklick-Menü ein- oder ausblenden
   game.settings.register(MODULE_ID, "showHud", {
     name: "CLOOT.Setting.ShowHud.Name",

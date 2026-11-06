@@ -1012,7 +1012,7 @@ async function pickResolve(ctx, p) {
   if (!isValidTotal(p.total)) return fail("CLOOT.Err.Internal");
   const dc = pickpocketDc(ctx.pick.cfg, passivePerception(ctx.actor));
   const success = pickpocketSucceeded(dc, p.total);
-  await ctx.corpse.update({ [`flags.${MODULE_ID}.pick.thieves.${ctx.pick.id}`]: { status: success ? "success" : "failed", granted: false, items: [], coins: false, total: Number(p.total), dc } });
+  await ctx.corpse.update({ [`flags.${MODULE_ID}.pick.thieves.${ctx.pick.id}`]: { status: success ? "success" : "failed", granted: success && Boolean(game.settings.get(MODULE_ID, "pickAutoGrant")), items: [], coins: false, total: Number(p.total), dc } });
   const gms = game.users.filter((u) => u.isGM).map((u) => u.id);
   if (success) {
     await ChatMessage.create({
@@ -1132,6 +1132,8 @@ async function plantRequest(ctx, p) {
   const same = pending.find((x) => x.name === item.name);
   const key = same?.id ?? foundry.utils.randomID();
   await ctx.corpse.update({ [`flags.${MODULE_ID}.pick.thieves.${ctx.pick.id}.plants.${key}`]: { itemUuid: item.uuid, name: item.name, img: item.img, qty } });
+  // Einstellung "automatisch": ohne Rückfrage sofort unterschieben
+  if (game.settings.get(MODULE_ID, "plantAutoApprove")) return resolvePlant(ctx, { actorId: ctx.pick.id, plantId: key }, true, true);
   await chatTo("CLOOT.Chat.PlantAsk", { who: escapeHtml(ctx.looter.name), target: escapeHtml(ctx.corpse.name), item: escapeHtml(item.name), qty }, gmIds());
   // Kleines Bestätigungsfenster bei der Spielleitung
   const info = {
@@ -1185,8 +1187,8 @@ async function plantCancel(ctx, p) {
 }
 
 /** Spielleitung: Den Wunsch lesen und den Gegenstand dem Ziel zuschieben oder ablehnen. */
-async function resolvePlant(ctx, p, approve) {
-  if (!ctx.isGM) return fail("CLOOT.Err.GMOnly");
+async function resolvePlant(ctx, p, approve, auto = false) {
+  if (!auto && !ctx.isGM) return fail("CLOOT.Err.GMOnly");
   const plant = (ctx.corpse.getFlag(MODULE_ID, "pick") ?? {}).thieves?.[p.actorId]?.plants?.[p.plantId];
   if (!plant) return fail("CLOOT.Err.Internal");
   const item = plant.itemUuid ? await fromUuid(plant.itemUuid) : null;
