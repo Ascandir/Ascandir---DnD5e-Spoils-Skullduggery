@@ -523,3 +523,12 @@
 .bag-info-meta { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; margin-bottom: 0.3rem; font-size: 0.9rem; font-style: italic; color: var(--bag-brass); text-transform: capitalize; }
 .bag-info-text p { margin: 0 0 0.4rem; }
 .bag-info-text h1, .bag-info-text h2, .bag-info-text h3 { font-size: 1.1rem; margin: 0.3rem 0; border: 0; color: #f0dfb8; }
+
+/* Unterschieben */
+.bag-plant { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.5rem 0.7rem; border: 1px dashed var(--bag-line); border-radius: 6px; background: rgba(0, 0, 0, 0.2); }
+.bag-plant.dragover { border-color: var(--bag-brass); background: rgba(240, 200, 120, 0.12); }
+.bag-plant-drop { text-align: center; font-style: italic; color: var(--bag-mute); }
+.bag-plant-row { display: flex; align-items: center; gap: 0.5rem; }
+.bag-plant-row .bag-name { flex: 1 1 auto; }
+.bag-plant-row .bag-ico { width: 2rem; height: 2rem; flex: 0 0 2rem; }
+.bag-plant-ask { padding: 0.2rem 0 0.2rem 1rem; border-left: 2px solid var(--bag-brass); }

@@ -1,4 +1,4 @@
-# Ascandir - DnD5e Spoils & Skullduggery v0.29.0
+# Ascandir - DnD5e Spoils & Skullduggery v0.30.0
 
 Tote NSCs und Spielercharaktere (Totenkopf-Status) lassen sich im Umkreis plündern. D&D 5e, Foundry v13/v14.
 
@@ -174,6 +174,8 @@ Beim Anlegen eines Actors gibt es den neuen Typ **Container**. Er hat einen eige
 Im Container-Bogen wählst du das **Typ**: *Truhe* (Holz mit Eisenbeschlägen und Messingschild) oder *Sack* (Lederbeutel). Das Schloss-Fenster ist ein Vorhängeschloss in Holz und Eisen und gilt für Türen und Container. Der Chat nennt bei Containern den Namen des Tokens statt "Tür".
 
 Gleiche Gegenstände im Container werden automatisch **gestapelt**: beim Ablegen auf den Bogen, beim Würfeln der Loottable und bei der Ernte. Der Button **Gleiche Gegenstände stapeln** im Bogen fasst schon vorhandene Duplikate zusammen. Ausgerüstete, eingestimmte oder unterschiedlich benannte Gegenstände bleiben getrennt.
+
+**Unterschieben:** Hat ein Dieb sein Ziel erfolgreich bestohlen (Fingerfertigkeit gelungen), kann er einen Gegenstand aus seinem Inventar ins Beute-Fenster ziehen, um ihn dem Ziel unterzuschieben. Der Gegenstand bleibt zunächst beim Dieb, die Spielleitung bekommt eine Nachricht und entscheidet im Beute-Fenster mit **Bestätigen** oder **Ablehnen**. Erst bei der Bestätigung wechselt er den Besitzer. Der Dieb kann den Wunsch vorher zurückziehen.
 
 Ein Klick auf den Namen eines Gegenstands im Beute-Fenster klappt seine **Beschreibung** mit Seltenheit, Gewicht und Preis auf (nicht identifizierte Gegenstände zeigen nur die unbekannte Beschreibung).
 

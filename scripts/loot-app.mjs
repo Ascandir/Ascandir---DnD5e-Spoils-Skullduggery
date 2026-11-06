@@ -38,6 +38,9 @@ export class LootApp extends Base {
       pickConfig: LootApp.onPickConfig,
       pickGrant: LootApp.onPickGrant,
       pickReset: LootApp.onPickReset,
+      plantCancel: LootApp.onPlantAct,
+      plantApprove: LootApp.onPlantAct,
+      plantReject: LootApp.onPlantAct,
       pickItem: LootApp.onPickItem,
       pickCoins: LootApp.onPickCoins,
       openLock: LootApp.onOpenLock,
@@ -111,6 +114,29 @@ export class LootApp extends Base {
     // Mengenfeld (Spielleitung): Änderung speichern
     for (const input of this.element.querySelectorAll("input[data-role='stock']")) {
       input.addEventListener("change", () => this.act("gmQty", { itemId: input.closest("[data-item-id]")?.dataset.itemId, qty: input.value }));
+    }
+    // Dieb: Gegenstand aus dem eigenen Inventar auf das Ziel ziehen, um ihn unterzuschieben (die Spielleitung bestätigt)
+    for (const zone of this.element.querySelectorAll("[data-plant-drop]")) {
+      zone.addEventListener("dragenter", () => zone.classList.add("dragover"));
+      zone.addEventListener("dragleave", (ev) => {
+        if (!zone.contains(ev.relatedTarget)) zone.classList.remove("dragover");
+      });
+      zone.addEventListener("dragover", (ev) => ev.preventDefault());
+      zone.addEventListener("drop", async (ev) => {
+        ev.preventDefault();
+        zone.classList.remove("dragover");
+        let data;
+        try {
+          data = JSON.parse(ev.dataTransfer.getData("text/plain"));
+        } catch {
+          return;
+        }
+        if (data?.type !== "Item" || !data.uuid) return;
+        const item = await fromUuid(data.uuid);
+        if (!(item?.parent instanceof Actor)) return;
+        const qty = await Service.askDepositQty(item, "CLOOT.Plant.Button");
+        if (qty) await this.act("plantRequest", { itemUuid: item.uuid, qty });
+      });
     }
     // Gegenstände ins Fenster ziehen: Spielleitung gibt sie dem Token, Spieler legen eigene in einen Container
     for (const zone of this.element.querySelectorAll("[data-gm-drop]")) {
@@ -298,6 +324,11 @@ export class LootApp extends Base {
 
   static async onPickCoins(event, target) {
     await this.act("pickCoins", { actorId: target.dataset.actor });
+  }
+
+  /** Unterschieben: zurückziehen (Dieb), bestätigen oder ablehnen (Spielleitung). */
+  static async onPlantAct(event, target) {
+    await this.act(target.dataset.action, { actorId: target.dataset.actor, plantId: target.dataset.plant });
   }
 
   static async onPickReset(event, target) {

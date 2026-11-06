@@ -280,5 +280,15 @@
   "CLOOT.Container.DropHint": "Gegenstände aus dem Inventar hierher ziehen",
   "CLOOT.Container.PlayersOwn": "Spieler dürfen einlegen",
   "CLOOT.On": "an",
-  "CLOOT.Off": "aus"
+  "CLOOT.Off": "aus",
+  "CLOOT.Plant.Drop": "Gegenstand aus deinem Inventar hierher ziehen, um ihn unbemerkt unterzuschieben. Die Spielleitung muss es bestätigen.",
+  "CLOOT.Plant.Pending": "wartet auf Bestätigung",
+  "CLOOT.Plant.Cancel": "Zurückziehen",
+  "CLOOT.Plant.Wants": "möchte unterschieben",
+  "CLOOT.Plant.Approve": "Bestätigen",
+  "CLOOT.Plant.Reject": "Ablehnen",
+  "CLOOT.Plant.Button": "Unterschieben",
+  "CLOOT.Chat.PlantAsk": "{who} möchte {target} unbemerkt „{item}“ (x{qty}) unterschieben. Bestätige oder lehne es im Beute-Fenster ab.",
+  "CLOOT.Chat.PlantDone": "{who} hat {target} unbemerkt „{item}“ (x{qty}) untergeschoben.",
+  "CLOOT.Chat.PlantNo": "Das Unterschieben von „{item}“ bei {target} wurde abgelehnt. {who} behält den Gegenstand."
 }

@@ -298,6 +298,14 @@ export async function gmHandle(user, op, p) {
       return pickCoins(ctx, p);
     case "pickReset":
       return pickReset(ctx, p);
+    case "plantRequest":
+      return plantRequest(ctx, p);
+    case "plantCancel":
+      return plantCancel(ctx, p);
+    case "plantApprove":
+      return plantApprove(ctx, p);
+    case "plantReject":
+      return plantReject(ctx, p);
     default:
       return fail("CLOOT.Err.Internal");
   }
@@ -362,7 +370,9 @@ function buildState(ctx) {
       ? {
           open: ctx.pick.status === "open",
           failed: ctx.pick.status === "failed",
-          waiting: ctx.pick.status === "success" && !pickpocketHasGrant(ctx.pick)
+          waiting: ctx.pick.status === "success" && !pickpocketHasGrant(ctx.pick),
+          canPlant: ctx.pick.status === "success",
+          plants: plantsOf(ctx.pick.cfg, ctx.pick.id)
         }
       : null,
     pickGM: ctx.isGM && ctx.alive ? pickGMView(ctx, successThieves) : null
@@ -762,14 +772,14 @@ async function depositHere(ctx, p) {
 }
 
 /** Fragt bei Stapeln, wie viele eingelegt werden sollen. Gibt die Menge zurück oder null (abgebrochen). */
-export async function askDepositQty(item) {
+export async function askDepositQty(item, label = "CLOOT.Container.Deposit") {
   const max = item.type === "container" ? 1 : Number(item.system?.quantity ?? 1) || 1;
   if (max <= 1) return 1;
   const field = `<div class="form-group"><label>${game.i18n.localize("CLOOT.Container.HowMany")}</label><div class="form-fields"><input type="number" name="qty" min="1" max="${max}" step="1" value="${max}" autofocus></div></div>`;
   const res = await foundry.applications.api.DialogV2.prompt({
     window: { title: item.name },
     content: field,
-    ok: { label: game.i18n.localize("CLOOT.Container.Deposit"), callback: (ev, button) => Number(button.form.elements.qty.value) }
+    ok: { label: game.i18n.localize(label), callback: (ev, button) => Number(button.form.elements.qty.value) }
   }).catch(() => null);
   return res ? Math.min(max, Math.max(1, Math.floor(res))) : null;
 }
@@ -965,7 +975,8 @@ function pickGMView(ctx, successThieves = []) {
     name: game.actors.get(id)?.name ?? "?",
     isSuccess: v?.status === "success",
     isFailed: v?.status === "failed",
-    granted: Boolean(v?.granted)
+    granted: Boolean(v?.granted),
+    plants: plantsOf(cfg, id)
   }));
   return {
     enabled: pickpocketAllowed(cfg, game.settings.get(MODULE_ID, "pickpocket")),
@@ -1081,6 +1092,81 @@ async function pickReset(ctx, p) {
   changed(ctx.corpse.uuid);
   return { ok: true, state: buildState(ctx) };
 }
+
+/* -------------------------------------------- */
+/*  Unterschieben                                */
+/* -------------------------------------------- */
+
+/** Offene Wünsche eines Diebes, dem Ziel etwas unterzuschieben (warten auf die Bestätigung der Spielleitung). */
+const plantsOf = (cfg, actorId) =>
+  Object.entries(cfg?.thieves?.[actorId]?.plants ?? {}).map(([id, v]) => ({
+    id,
+    actorId,
+    name: String(v?.name ?? "?"),
+    img: String(v?.img ?? ""),
+    qty: Math.max(1, Math.floor(Number(v?.qty) || 1)),
+    multi: (Number(v?.qty) || 1) > 1
+  }));
+
+const gmIds = () => game.users.filter((u) => u.isGM).map((u) => u.id);
+const ownerIds = (actor) => game.users.filter((u) => !u.isGM && actor?.testUserPermission(u, "OWNER")).map((u) => u.id);
+const chatTo = (key, data, whisper) =>
+  ChatMessage.create({ content: `<div class="corpse-loot-chat"><p>${t(key, data)}</p></div>`, whisper: [...new Set(whisper)] });
+
+/** Dieb: Einen Gegenstand aus dem eigenen Inventar vormerken, den er dem Ziel unterschieben will. */
+async function plantRequest(ctx, p) {
+  if (!ctx.pick || ctx.pick.status !== "success") return fail("CLOOT.Err.Internal");
+  const actor = ctx.looter.actor;
+  const item = p.itemUuid ? await fromUuid(p.itemUuid) : null;
+  if (!item || !(item.parent instanceof Actor) || item.parent.id !== actor.id) return fail("CLOOT.Err.ItemGone");
+  if (item.system?.container) return fail("CLOOT.Err.Internal");
+  const max = item.type === "container" ? 1 : Number(item.system?.quantity ?? 1) || 1;
+  const qty = Math.min(max, Math.max(1, Math.floor(Number(p.qty) || 1)));
+  const pending = plantsOf(ctx.pick.cfg, ctx.pick.id);
+  const same = pending.find((x) => x.name === item.name);
+  const key = same?.id ?? foundry.utils.randomID();
+  await ctx.corpse.update({ [`flags.${MODULE_ID}.pick.thieves.${ctx.pick.id}.plants.${key}`]: { itemUuid: item.uuid, name: item.name, img: item.img, qty } });
+  await chatTo("CLOOT.Chat.PlantAsk", { who: escapeHtml(ctx.looter.name), target: escapeHtml(ctx.corpse.name), item: escapeHtml(item.name), qty }, gmIds());
+  changed(ctx.corpse.uuid);
+  return { ok: true, state: buildState(ctx) };
+}
+
+/** Wunsch zurückziehen (der Dieb selbst oder die Spielleitung). */
+async function plantCancel(ctx, p) {
+  const actorId = ctx.pick ? ctx.pick.id : ctx.isGM ? p.actorId : null;
+  if (!actorId || !p.plantId) return fail("CLOOT.Err.Internal");
+  await ctx.corpse.update({ [`flags.${MODULE_ID}.pick.thieves.${actorId}.plants.-=${p.plantId}`]: null });
+  changed(ctx.corpse.uuid);
+  return { ok: true, state: buildState(ctx) };
+}
+
+/** Spielleitung: Den Wunsch lesen und den Gegenstand dem Ziel zuschieben oder ablehnen. */
+async function resolvePlant(ctx, p, approve) {
+  if (!ctx.isGM) return fail("CLOOT.Err.GMOnly");
+  const plant = (ctx.corpse.getFlag(MODULE_ID, "pick") ?? {}).thieves?.[p.actorId]?.plants?.[p.plantId];
+  if (!plant) return fail("CLOOT.Err.Internal");
+  const item = plant.itemUuid ? await fromUuid(plant.itemUuid) : null;
+  const thief = item?.parent instanceof Actor ? item.parent : game.actors.get(p.actorId);
+  const owners = ownerIds(thief);
+  const data = { who: escapeHtml(thief?.name ?? "?"), target: escapeHtml(ctx.corpse.name), item: escapeHtml(plant.name), qty: Number(plant.qty) || 1 };
+  await ctx.corpse.update({ [`flags.${MODULE_ID}.pick.thieves.${p.actorId}.plants.-=${p.plantId}`]: null });
+  if (approve) {
+    if (!item || !(item.parent instanceof Actor)) {
+      changed(ctx.corpse.uuid);
+      return fail("CLOOT.Err.ItemGone");
+    }
+    const max = item.type === "container" ? 1 : Number(item.system?.quantity ?? 1) || 1;
+    await moveItemTo(item, ctx.actor, Math.min(max, data.qty));
+    await chatTo("CLOOT.Chat.PlantDone", data, [...gmIds(), ...owners]);
+  } else {
+    await chatTo("CLOOT.Chat.PlantNo", data, [...gmIds(), ...owners]);
+  }
+  changed(ctx.corpse.uuid);
+  return { ok: true, state: buildState(ctx) };
+}
+
+const plantApprove = (ctx, p) => resolvePlant(ctx, p, true);
+const plantReject = (ctx, p) => resolvePlant(ctx, p, false);
 
 /* -------------------------------------------- */
 /*  Verschlossene Türen                          */

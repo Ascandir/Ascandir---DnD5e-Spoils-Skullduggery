@@ -280,5 +280,15 @@
   "CLOOT.Container.DropHint": "Drag items from an inventory here",
   "CLOOT.Container.PlayersOwn": "Players may put items in",
   "CLOOT.On": "on",
-  "CLOOT.Off": "off"
+  "CLOOT.Off": "off",
+  "CLOOT.Plant.Drop": "Drag an item from your inventory here to slip it to the target unnoticed. The GM has to confirm.",
+  "CLOOT.Plant.Pending": "waiting for approval",
+  "CLOOT.Plant.Cancel": "Withdraw",
+  "CLOOT.Plant.Wants": "wants to plant",
+  "CLOOT.Plant.Approve": "Approve",
+  "CLOOT.Plant.Reject": "Reject",
+  "CLOOT.Plant.Button": "Plant",
+  "CLOOT.Chat.PlantAsk": "{who} wants to slip “{item}” (x{qty}) to {target} unnoticed. Approve or reject it in the loot window.",
+  "CLOOT.Chat.PlantDone": "{who} slipped “{item}” (x{qty}) to {target} unnoticed.",
+  "CLOOT.Chat.PlantNo": "Planting “{item}” on {target} was rejected. {who} keeps the item."
 }
