@@ -290,5 +290,11 @@
   "CLOOT.Plant.Button": "Unterschieben",
   "CLOOT.Chat.PlantAsk": "{who} möchte {target} unbemerkt „{item}“ (x{qty}) unterschieben. Bestätige oder lehne es im Beute-Fenster ab.",
   "CLOOT.Chat.PlantDone": "{who} hat {target} unbemerkt „{item}“ (x{qty}) untergeschoben.",
-  "CLOOT.Chat.PlantNo": "Das Unterschieben von „{item}“ bei {target} wurde abgelehnt. {who} behält den Gegenstand."
+  "CLOOT.Chat.PlantNo": "Das Unterschieben von „{item}“ bei {target} wurde abgelehnt. {who} behält den Gegenstand.",
+  "CLOOT.Plant.AskText": "{who} versucht, {target} unbemerkt {item} unterzuschieben. Erlauben?",
+  "CLOOT.Plant.Yes": "Ja",
+  "CLOOT.Plant.No": "Nein",
+  "CLOOT.Plant.Stealth": "Heimlichkeit (passiv)",
+  "CLOOT.Plant.Sleight": "Fingerfertigkeit",
+  "CLOOT.Plant.Perception": "Wahrnehmung des Ziels (passiv)"
 }

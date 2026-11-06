@@ -93,6 +93,9 @@ export function initSocket() {
       case "changed":
         refreshApps(msg.tokenUuid);
         break;
+      case "plantAsk":
+        if (isActiveGM()) askPlant(msg.data).catch((err) => console.error(`${MODULE_ID} |`, err));
+        break;
     }
   });
 }
@@ -1006,7 +1009,7 @@ async function pickResolve(ctx, p) {
   if (!isValidTotal(p.total)) return fail("CLOOT.Err.Internal");
   const dc = pickpocketDc(ctx.pick.cfg, passivePerception(ctx.actor));
   const success = pickpocketSucceeded(dc, p.total);
-  await ctx.corpse.update({ [`flags.${MODULE_ID}.pick.thieves.${ctx.pick.id}`]: { status: success ? "success" : "failed", granted: false, items: [], coins: false } });
+  await ctx.corpse.update({ [`flags.${MODULE_ID}.pick.thieves.${ctx.pick.id}`]: { status: success ? "success" : "failed", granted: false, items: [], coins: false, total: Number(p.total), dc } });
   const gms = game.users.filter((u) => u.isGM).map((u) => u.id);
   if (success) {
     await ChatMessage.create({
@@ -1127,8 +1130,46 @@ async function plantRequest(ctx, p) {
   const key = same?.id ?? foundry.utils.randomID();
   await ctx.corpse.update({ [`flags.${MODULE_ID}.pick.thieves.${ctx.pick.id}.plants.${key}`]: { itemUuid: item.uuid, name: item.name, img: item.img, qty } });
   await chatTo("CLOOT.Chat.PlantAsk", { who: escapeHtml(ctx.looter.name), target: escapeHtml(ctx.corpse.name), item: escapeHtml(item.name), qty }, gmIds());
+  // Kleines Bestätigungsfenster bei der Spielleitung
+  const info = {
+    tokenUuid: ctx.corpse.uuid,
+    actorId: ctx.pick.id,
+    plantId: key,
+    who: ctx.looter.name,
+    target: ctx.corpse.name,
+    item: item.name,
+    qty,
+    stealth: Number(actor.system?.skills?.ste?.passive) || null,
+    total: Number(ctx.pick.cfg?.thieves?.[ctx.pick.id]?.total) || null,
+    dc: Number(ctx.pick.cfg?.thieves?.[ctx.pick.id]?.dc) || null,
+    perception: passivePerception(ctx.actor)
+  };
+  game.socket.emit(SOCKET, { kind: "plantAsk", data: info });
+  if (isActiveGM()) askPlant(info).catch((err) => console.error(`${MODULE_ID} |`, err));
   changed(ctx.corpse.uuid);
   return { ok: true, state: buildState(ctx) };
+}
+
+/** Fenster bei der Spielleitung: Soll der Gegenstand untergeschoben werden? Ja bestätigt, Nein lehnt ab. */
+async function askPlant(d) {
+  const e = (v) => foundry.utils.escapeHTML?.(String(v)) ?? escapeHtml(String(v));
+  const facts = [];
+  if (d.stealth) facts.push(`${t("CLOOT.Plant.Stealth")}: <strong>${d.stealth}</strong>`);
+  if (d.total) facts.push(`${t("CLOOT.Plant.Sleight")}: <strong>${d.total}</strong>${d.dc ? ` (${t("CLOOT.Pick.DC")} ${d.dc})` : ""}`);
+  if (d.perception) facts.push(`${t("CLOOT.Plant.Perception")}: <strong>${d.perception}</strong>`);
+  const content = `<p>${t("CLOOT.Plant.AskText", { who: e(d.who), target: e(d.target), item: `<strong>${e(d.item)}</strong>${d.qty > 1 ? ` (x${d.qty})` : ""}` })}</p>${facts.length ? `<p class="hint">${facts.join(" · ")}</p>` : ""}`;
+  const yes = await foundry.applications.api.DialogV2.confirm({
+    window: { title: d.item },
+    content,
+    yes: { label: t("CLOOT.Plant.Yes") },
+    no: { label: t("CLOOT.Plant.No") },
+    rejectClose: false
+  });
+  if (yes === null) return; // Fenster nur geschlossen: Der Wunsch bleibt im Beute-Fenster offen
+  const tok = await fromUuid(d.tokenUuid);
+  if (!tok?.getFlag(MODULE_ID, "pick")?.thieves?.[d.actorId]?.plants?.[d.plantId]) return; // schon im Beute-Fenster entschieden
+  const res = await gmHandle(game.user, yes ? "plantApprove" : "plantReject", { tokenUuid: d.tokenUuid, actorId: d.actorId, plantId: d.plantId });
+  if (res && !res.ok) ui.notifications.warn(errorText(res));
 }
 
 /** Wunsch zurückziehen (der Dieb selbst oder die Spielleitung). */

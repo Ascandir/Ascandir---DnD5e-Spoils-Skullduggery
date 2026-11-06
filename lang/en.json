@@ -290,5 +290,11 @@
   "CLOOT.Plant.Button": "Plant",
   "CLOOT.Chat.PlantAsk": "{who} wants to slip “{item}” (x{qty}) to {target} unnoticed. Approve or reject it in the loot window.",
   "CLOOT.Chat.PlantDone": "{who} slipped “{item}” (x{qty}) to {target} unnoticed.",
-  "CLOOT.Chat.PlantNo": "Planting “{item}” on {target} was rejected. {who} keeps the item."
+  "CLOOT.Chat.PlantNo": "Planting “{item}” on {target} was rejected. {who} keeps the item.",
+  "CLOOT.Plant.AskText": "{who} tries to slip {item} to {target} unnoticed. Allow it?",
+  "CLOOT.Plant.Yes": "Yes",
+  "CLOOT.Plant.No": "No",
+  "CLOOT.Plant.Stealth": "Stealth (passive)",
+  "CLOOT.Plant.Sleight": "Sleight of Hand",
+  "CLOOT.Plant.Perception": "Target's Perception (passive)"
 }
