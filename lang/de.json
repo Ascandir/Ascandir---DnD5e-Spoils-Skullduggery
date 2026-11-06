@@ -27,6 +27,7 @@
   "CLOOT.Chat.TakeSelf": "<strong>{who}</strong> nimmt {what} von {from}.",
   "CLOOT.Chat.TakeGroup": "<strong>{who}</strong> legt {what} von {from} ins Party-Inventar ({group}).",
   "CLOOT.Chat.Released": "Die Beute von <strong>{name}</strong> ist freigegeben.",
+  "CLOOT.Err.NoGM": "Die Spielleitung ist nicht online. Das geht nur, wenn die Spielleitung im Spiel ist.",
   "CLOOT.Err.Timeout": "Keine Antwort von der Spielleitung.",
   "CLOOT.Err.Internal": "Das hat nicht geklappt. Details stehen in der Konsole (F12) der Spielleitung.",
   "CLOOT.Err.NoCorpse": "Dieser Token existiert nicht mehr.",

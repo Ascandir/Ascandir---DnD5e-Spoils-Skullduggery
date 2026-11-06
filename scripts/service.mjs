@@ -106,10 +106,13 @@ export async function request(op, payload) {
   // Keine Spielleitung online: Die Aktion läuft direkt hier. Die Regeln (Freigabe, Reichweite, Besitzer) gelten weiter;
   // schreiben darf der Spieler nur, was Foundry ihm erlaubt. Das macht Tests ohne zweiten Account möglich.
   if (!game.users.activeGM) {
+    // Das Unterschieben braucht die Spielleitung immer: Der Spieler darf den fremden Token nicht beschreiben und die Spielleitung muss bestätigen.
+    if (op.startsWith("plant")) return fail("CLOOT.Err.NoGM");
     try {
       return await gmHandle(game.user, op, payload);
     } catch (err) {
       console.error(`${MODULE_ID} |`, err);
+      if (/lacks permission/i.test(err?.message ?? "")) return fail("CLOOT.Err.NoGM");
       return fail("CLOOT.Err.Crash", { msg: err?.message ?? String(err) });
     }
   }

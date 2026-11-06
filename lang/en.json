@@ -27,6 +27,7 @@
   "CLOOT.Chat.TakeSelf": "<strong>{who}</strong> takes {what} from {from}.",
   "CLOOT.Chat.TakeGroup": "<strong>{who}</strong> puts {what} from {from} into the party inventory ({group}).",
   "CLOOT.Chat.Released": "The loot of <strong>{name}</strong> has been released.",
+  "CLOOT.Err.NoGM": "The GM is not online. This only works while the GM is in the game.",
   "CLOOT.Err.Timeout": "No response from the GM.",
   "CLOOT.Err.Internal": "That did not work. See the GM's console (F12) for details.",
   "CLOOT.Err.NoCorpse": "This token no longer exists.",
