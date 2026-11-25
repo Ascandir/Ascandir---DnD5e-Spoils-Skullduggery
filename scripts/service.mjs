@@ -251,7 +251,7 @@ function resolve(user, p) {
     locked = pick.status !== "success";
   }
 
-  return { ok: true, user, isGM, alive, corpse, actor: corpse.actor, looter, canTake: canTake && !locked, locked, hidden, pick, released, requireRelease, isBox, boxLocked };
+  return { ok: true, user, isGM, alive, corpse, actor: corpse.actor, looter, canTake: canTake && !locked, locked, hidden, pick, released, requireRelease, isBox, boxLocked, boxOwner: isBox && Boolean(corpse.actor?.testUserPermission(user, "OWNER")) };
 }
 
 /* -------------------------------------------- */
@@ -335,7 +335,7 @@ function buildState(ctx) {
           canTake: can,
           canGroup: can && Boolean(group),
           canManage: ctx.isGM,
-          canStock: ctx.isGM || (ctx.isBox && ctx.canTake),
+          canStock: ctx.isGM || (ctx.isBox && ctx.canTake && ctx.boxOwner),
           grants: successThieves.map((th) => ({ actorId: th.actorId, name: th.name, short: th.short, on: th.all || th.items.includes(i.id) }))
         };
       });
@@ -748,7 +748,7 @@ async function gmAdd(ctx, p) {
 /** Menge eines Gegenstands ändern (Plus/Minus im Fenster). Mindestens 1. */
 async function gmQty(ctx, p) {
   // Spielleitung immer; bei Truhen auch Spieler in Reichweite (offene Truhe)
-  if (!ctx.isGM && !(ctx.isBox && ctx.canTake)) return fail("CLOOT.Err.GMOnly");
+  if (!ctx.isGM && !(ctx.isBox && ctx.canTake && ctx.boxOwner)) return fail("CLOOT.Err.GMOnly");
   const item = ctx.actor.items.get(p.itemId);
   if (!item || item.system?.quantity === undefined) return fail("CLOOT.Err.ItemGone");
   const qty = Math.max(1, Math.floor(Number(p.qty) || 1));
