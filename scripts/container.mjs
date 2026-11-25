@@ -90,14 +90,17 @@ function makeSheet(ActorSheetV2, HandlebarsApplicationMixin) {
 
     /** Dürfen Spieler den Container selbst befüllen? (Besitzerrecht für alle) */
     get playersOwn() {
-      const base = this.document.isToken ? this.document.baseActor : this.document;
-      return (base?.ownership?.default ?? 0) >= CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
+      // Maßgeblich ist, was für diese Spielfigur tatsächlich gilt (bei Token der Token-Actor, nicht nur der Vorlagen-Actor)
+      return (this.document?.ownership?.default ?? 0) >= CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
     }
 
     static async onPlayersOwn() {
-      const base = this.document.isToken ? this.document.baseActor : this.document;
       const L = CONST.DOCUMENT_OWNERSHIP_LEVELS;
-      await base.update({ "ownership.default": this.playersOwn ? L.NONE : L.OWNER });
+      const level = this.playersOwn ? L.NONE : L.OWNER;
+      const docs = [this.document];
+      // bei einem Token zusätzlich die Vorlage setzen, damit neue Token gleich passen
+      if (this.document.isToken && this.document.baseActor) docs.push(this.document.baseActor);
+      for (const d of docs) await d.update({ "ownership.default": level });
       this.render();
     }
 
