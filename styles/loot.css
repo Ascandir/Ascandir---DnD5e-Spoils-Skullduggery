@@ -532,3 +532,4 @@
 .bag-plant-row .bag-name { flex: 1 1 auto; }
 .bag-plant-row .bag-ico { width: 2rem; height: 2rem; flex: 0 0 2rem; }
 .bag-plant-ask { padding: 0.2rem 0 0.2rem 1rem; border-left: 2px solid var(--bag-brass); }
+.bag-rows > li { flex: 0 0 auto; }
